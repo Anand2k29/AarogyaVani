@@ -227,12 +227,12 @@ npm run dev
 
 ---
 
-## 👨‍💻 Team -- Ana 
+## 👨‍💻 Team Ana
 
-Members :
-**Jyotasana** 
-**Anand Minejes** 
- 
+| Members |
+|---------|
+| **Jyotasana** |
+| **Anand Minejes** |
 
 ---
 
