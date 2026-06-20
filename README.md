@@ -175,7 +175,7 @@ AarogyaVani operates on a **Zero-Knowledge, On-Device Architecture**:
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/Anand2k29/AarogyaVani-PE2.git
+git clone https://github.com/Anand2k29/AarogyaVani-GenAI.git
 cd AarogyaVani
 npm install
 ```
@@ -227,15 +227,12 @@ npm run dev
 
 ---
 
-## 👨‍💻 Team 103 (PE-2)
+## 👨‍💻 Team -- Ana 
 
-| Member | Role |
-|--------|------|
-| **Jyotasana** | Team Lead — AI Core & Architecture |
-| **Anand Minejes** | Mobile Developer — Cloud Sync & Portals |
-| **Pavithra Vinesh** | UI/UX Designer & Regional Voice Lab |
-| **Aleena Manesh I** | Research & Wellness Content Strategy |
-| **Yash Raj** | API Integration & Backend Security |
+| Members 
+ **Jyotasana** 
+ **Anand Minejes** 
+ 
 
 ---
 
