@@ -1,5 +1,5 @@
 import React from 'react';
-import { DecodeResult } from '../services/inferenceService';
+import { DecodedPrescriptionResult } from '../services/prescriptionDecoder';
 
 interface ScannerContentProps {
   appState: 'IDLE' | 'DETECTING' | 'SUCCESS' | 'ERROR';
@@ -12,7 +12,7 @@ interface ScannerContentProps {
   setIsLangOpen: (val: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  result: DecodeResult | null;
+  result: DecodedPrescriptionResult | null;
   isPlaying: boolean;
   toggleAudio: () => void;
   reset: () => void;

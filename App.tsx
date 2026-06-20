@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { decodePrescription, DecodeResult } from './services/inferenceService';
-import { speakInstructions, stopSpeaking } from './services/audioService';
+import { decodePrescriptionText, DecodedPrescriptionResult } from './services/prescriptionDecoder';
+import { TTSEngine } from './services/ttsEngine';
 import { getCurrentUser, logOut, UserProfile, getDataNamespace } from './services/authService';
 import { AuthPage } from './components/AuthPage';
 import { ElderlyCompanion } from './components/ElderlyCompanion';
@@ -82,7 +82,7 @@ export default function App() {
     return validTabs.includes(hash) ? hash : 'dashboard';
   });
   const [appState, setAppState] = useState<AppState>('IDLE');
-  const [result, setResult] = useState<DecodeResult | null>(null);
+  const [result, setResult] = useState<DecodedPrescriptionResult | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -204,13 +204,13 @@ export default function App() {
     setPreviewUrl(url);
     setAppState('DETECTING');
     setErrorMsg(null);
-    stopSpeaking();
+    TTSEngine.stopSpeaking();
     setIsPlaying(false);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = (reader.result as string).split(',')[1];
       try {
-        const data = await decodePrescription(base64, scanLang, false, manualApiKey);
+        const data = await decodePrescriptionText(base64, manualApiKey, true, scanLang);
         setResult(data);
         setAppState('SUCCESS');
       } catch (err: any) {
@@ -223,25 +223,14 @@ export default function App() {
 
   const toggleAudio = useCallback(() => {
     if (isPlaying) {
-      stopSpeaking();
+      TTSEngine.stopSpeaking();
       setIsPlaying(false);
-    } else if (result) {
-      let text = result.rawSummary + '. ';
-      result.items.forEach((item, i) => {
-        const medLabel = scanLang === 'hi' ? 'दवाई' : 'Medicine';
-        const usedLabel = scanLang === 'hi' ? 'इसके लिए है' : 'Used for';
-        const doseLabel = scanLang === 'hi' ? 'इस्तेमाल करने का तरीका' : 'Instructions';
-        
-        text += `${medLabel} ${i + 1}: ${item.medicineName}. ${usedLabel}: ${item.usedFor}. ${doseLabel}: ${item.translatedDosage}. `;
-        if (item.warning) {
-            const warnLabel = scanLang === 'hi' ? 'सावधानी' : 'Warning';
-            text += `${warnLabel}: ${item.warning}. `;
-        }
-      });
-      speakInstructions(text, scanLang, {
-        hi: result.rawSummaryHindi,
-        en: result.rawSummaryEnglish
-      });
+    } else if (result && result.ttsScript) {
+      // Direct pass of single unified TTS string mapped to native script
+      const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
+      const currentLanguageMapping = langMapping[scanLang] || 'hinglish';
+      
+      TTSEngine.speakInstruction(result.ttsScript, currentLanguageMapping as any);
       setIsPlaying(true);
       setTimeout(() => setIsPlaying(false), 20000);
     }
@@ -252,7 +241,7 @@ export default function App() {
     setResult(null);
     setPreviewUrl(null);
     setErrorMsg(null);
-    stopSpeaking();
+    TTSEngine.stopSpeaking();
     setIsPlaying(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
@@ -507,12 +496,10 @@ export default function App() {
         try {
           // Trigger a dummy thinking state
           setAiResponse("...");
-          const res = await decodePrescription(transcript, currentLang, true, manualApiKey); // Overload for simple Q&A
-          setAiResponse(res.rawSummary);
-          speakInstructions(res.rawSummary, currentLang, {
-            hi: res.rawSummaryHindi,
-            en: res.rawSummaryEnglish
-          });
+          const res = await decodePrescriptionText(transcript, manualApiKey, false, currentLang); // Text mode
+          setAiResponse(res.rawSummary || "Done");
+          const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
+          TTSEngine.speakInstruction(res.ttsScript, (langMapping[currentLang] || 'hinglish') as any);
           setTimeout(() => setAiResponse(null), 8000);
         } catch {
           setAiResponse("Sorry, I couldn't understand that.");
