@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "AarogyaVani",
+    "slug": "AarogyaVani",
+    "scheme": "aarogyavani",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E91E63"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E91E63"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.aarogyavani.AarogyaVani",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "@react-native-google-signin/google-signin",
+      "expo-camera",
+      "expo-av"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "28ccfddb-555b-419c-9d8b-89230ac446f3"
+      }
+    }
+  }
+}

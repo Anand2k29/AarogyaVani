@@ -1,0 +1,27 @@
+{
+  "cli": {
+    "version": ">= 12.5.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_GROQ_API_KEY": "your_groq_api_key_here",
+        "EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID": "76369135608-aed8onhf8i8og9916c3s0ui89i3rsl55.apps.googleusercontent.com"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
