@@ -73,27 +73,36 @@ export async function decodePrescriptionText(
     let cleanContent = '';
     let usedProvider = '';
 
+    let geminiSuccess = false;
+
     // Route 1: Direct Gemini API (If it's an official Google 'AIza' key)
     if (key.startsWith('AIza')) {
-        console.log(`[DecoderService] Directly utilizing Google Generative AI Native Framework -> [gemini-2.5-flash] for ${resolvedLanguage}`);
-        const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        try {
+            console.log(`[DecoderService] Directly utilizing Google Generative AI Native Framework -> [gemini-2.5-flash] for ${resolvedLanguage}`);
+            const genAI = new GoogleGenerativeAI(key);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const parts: any[] = [{ text: PROMPT }];
-        if (isImage) {
-            parts.push({ inlineData: { data: input, mimeType: "image/jpeg" } });
-            parts.push({ text: `Extract prescription text into JSON format.` });
-        } else {
-            parts.push({ text: `Text: ${input}` });
+            const parts: any[] = [{ text: PROMPT }];
+            if (isImage) {
+                parts.push({ inlineData: { data: input, mimeType: "image/jpeg" } });
+                parts.push({ text: `Extract prescription text into JSON format.` });
+            } else {
+                parts.push({ text: `Text: ${input}` });
+            }
+
+            const result = await model.generateContent({
+                contents: [{ role: 'user', parts }],
+                generationConfig: { responseMimeType: "application/json" }
+            });
+            cleanContent = result.response.text();
+            usedProvider = "Native Gemini 2.5";
+            geminiSuccess = true;
+        } catch (error: any) {
+            console.warn(`[DecoderService] Native Gemini failed (${error.message}). Falling back to OpenRouter...`);
         }
+    }
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts }],
-            generationConfig: { responseMimeType: "application/json" }
-        });
-        cleanContent = result.response.text();
-        usedProvider = "Native Gemini 2.5";
-    } else {
+    if (!geminiSuccess) {
         // Route 2: OpenRouter Fallback System
         let lastError: Error | null = null;
         for (const model of OPENROUTER_MODELS) {

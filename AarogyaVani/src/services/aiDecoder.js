@@ -56,33 +56,44 @@ export async function analyzePrescription(input, targetLanguageCode = 'en') {
     let cleanContent = '';
     let usedProvider = '';
 
+    let geminiSuccess = false;
+
     // Route 1: Direct Gemini API (If it's an official Google 'AIza' key)
     if (key.startsWith('AIza')) {
-        console.log(`[MobileDecoder] Utilizing Native Google REST API -> [gemini-2.5-flash] for ${resolvedLanguage}`);
-        
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: PROMPT },
-                    { inline_data: { mime_type: "image/jpeg", data: input } },
-                    { text: "Extract prescription text into JSON format." }
-                ]
-            }],
-            generationConfig: { response_mime_type: "application/json" }
-        };
+        try {
+            console.log(`[MobileDecoder] Utilizing Native Google REST API -> [gemini-2.5-flash] for ${resolvedLanguage}`);
+            
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: PROMPT },
+                        { inline_data: { mime_type: "image/jpeg", data: input } },
+                        { text: "Extract prescription text into JSON format." }
+                    ]
+                }],
+                generationConfig: { response_mime_type: "application/json" }
+            };
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload) // direct rest fetch without any polyfill problems!
-        });
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        if (!response.ok) throw new Error(`Google API HTTP ${response.status}`);
-        const data = await response.json();
-        cleanContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        usedProvider = "Native Gemini 2.5 REST";
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Google API HTTP ${response.status} - ${errText}`);
+            }
+            const data = await response.json();
+            cleanContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            usedProvider = "Native Gemini 2.5 REST";
+            geminiSuccess = true;
+        } catch (error) {
+            console.warn(`[MobileDecoder] Native Gemini REST failed (${error.message}). Falling back to OpenRouter...`);
+        }
+    }
 
-    } else {
+    if (!geminiSuccess) {
         // Route 2: OpenRouter Fallback System
         let lastError = null;
         for (const model of OPENROUTER_MODELS) {
