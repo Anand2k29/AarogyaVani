@@ -51,8 +51,8 @@ export async function decodePrescriptionText(
 ): Promise<DecodedPrescriptionResult> {
     const t0 = performance.now();
     
-    // Ignore template placeholder strings
-    const sanitizeKey = (k: any) => (typeof k === 'string' && !k.includes('your_')) ? k : '';
+    // Ignore template placeholder strings and clean up whitespace!
+    const sanitizeKey = (k: any) => (typeof k === 'string' && !k.includes('your_')) ? k.trim() : '';
 
     const providedKey = sanitizeKey(apiKey);
     // @ts-ignore
@@ -146,6 +146,10 @@ export async function decodePrescriptionText(
                         max_tokens: 4096
                     })
                 });
+
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error(`Your API Key is invalid or expired. Please click the Settings icon (⚙️) and enter a valid API Key to continue.`);
+                }
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

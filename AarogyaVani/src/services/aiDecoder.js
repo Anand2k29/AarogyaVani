@@ -28,9 +28,8 @@ const OPENROUTER_MODELS = [
 
 export async function analyzePrescription(input, targetLanguageCode = 'en') {
     const t0 = performance.now();
-    
-    // Ignore template placeholder strings
-    const sanitizeKey = (k) => (typeof k === 'string' && !k.includes('your_')) ? k : '';
+    // Ignore template placeholder strings and clean up whitespace!
+    const sanitizeKey = (k) => (typeof k === 'string' && !k.includes('your_')) ? k.trim() : '';
 
     const envGemini = sanitizeKey(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
     const envOpenRouter = sanitizeKey(process.env.EXPO_PUBLIC_OPENROUTER_API_KEY);
@@ -127,6 +126,9 @@ export async function analyzePrescription(input, targetLanguageCode = 'en') {
                     })
                 });
 
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error(`Your API Key is invalid or expired. Please enter a valid API Key in settings.`);
+                }
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
