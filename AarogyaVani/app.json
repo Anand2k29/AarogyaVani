@@ -23,7 +23,12 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.aarogyavani.AarogyaVani",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       "@react-native-google-signin/google-signin",
@@ -35,8 +40,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "28ccfddb-555b-419c-9d8b-89230ac446f3"
+        "projectId": "b3732c4e-1777-4ba0-bcd2-52c73f9cd559"
       }
-    }
+    },
+    "owner": "tuje"
   }
 }

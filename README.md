@@ -9,17 +9,32 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-green?logo=android" alt="Platform" />
   <img src="https://img.shields.io/badge/Expo_SDK-54-blue?logo=expo" alt="Expo SDK" />
-  <img src="https://img.shields.io/badge/AI-Gemini_2.0_Flash-4285F4?logo=google" alt="AI Engine" />
+  <img src="https://img.shields.io/badge/AI-Gemini_2.5_Flash-4285F4?logo=google" alt="AI Engine" />
+  <img src="https://img.shields.io/badge/Fallback-OpenRouter_AI-7c3aed" alt="AI Fallback" />
   <img src="https://img.shields.io/badge/Languages-9_Indian-orange" alt="Languages" />
-  <img src="https://img.shields.io/badge/Version-1.2-E91E63" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.3.1-E91E63" alt="Version" />
+  <img src="https://img.shields.io/badge/Build-April_7_2026-brightgreen" alt="Build Date" />
 </p>
 
 ---
 
 ## 📥 Download APK
 
-> **Latest Stable Build (April 6, 2026):**
-> 👉 **[AarogyaVani v1.2 — Download APK](https://expo.dev/artifacts/eas/5YsSKe7z2JGHE54EaD3UFU.apk)**
+> **Latest Stable Build (April 7, 2026):**
+> 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/fPWWfEata5r2rhUKSJpWVw.apk)**
+
+> [!NOTE]
+> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **May 6, 2026**.
+
+| Build Detail | Value |
+|---|---|
+| **Build ID** | `fPWWfEata5r2rhUKSJpWVw` |
+| **Platform** | Android |
+| **Profile** | `preview` (APK) |
+| **SDK Version** | Expo SDK 54 |
+| **Status** | ✅ FINISHED |
+| **Built At** | April 7, 2026 |
+| **Expires** | May 7, 2026 |
 
 ---
 
@@ -46,24 +61,28 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Patient photographs a handwritten/printed prescription |
-| **AI Engine** | Google Generative AI (`gemini-2.0-flash`) processes the image |
-| **Output** | Structured extraction of medicine names, dosages, frequencies & timings |
-| **Fallback** | Multi-model cascade: Google AI → Groq LPU (`llama-3.2-11b-vision-instruct`) |
+| **Primary AI** | Google Generative AI (`gemini-2.5-flash`) via direct REST API |
+| **Fallback Cascade** | OpenRouter AI → `google/gemini-2.5-flash` → `qwen/qwen3.6-plus:free` → `google/gemma-3-27b-it:free` |
+| **Output** | Structured JSON: medicine names, dosages, frequencies, timings & TTS script |
+| **Key Insight** | Detects API key type automatically — `AIza...` keys use Gemini REST directly; all others route via OpenRouter |
 
 ### 🗣️ Pillar 2: Vernacular Voice Engine
 | Aspect | Detail |
 |--------|--------|
-| **Languages** | Hindi, English, Kannada, Telugu, Odia, Tamil, Bengali, Marathi, Gujarati (**9 total**) |
-| **How It Works** | Medicine names stay in English; usage instructions are translated and spoken aloud in the patient's native language |
+| **Mobile Languages** | English, Hindi, Odia, Kannada, Telugu (5 languages — device native TTS) |
+| **Web Languages** | Hindi, English, Kannada, Telugu, Odia, Tamil, Bengali, Marathi, Gujarati (**9 total**) |
+| **How It Works** | Medicine names stay in English; usage instructions are translated and spoken in the patient's native language |
 | **Smart Fallback** | If a regional voice isn't available on the device, auto-falls back to Hindi → English |
-| **Tech** | Native `expo-speech` API with intelligent voice detection |
+| **Mobile Tech** | Native `expo-speech` API with intelligent voice selection |
+| **Web Tech** | Web Speech API with async voice loading and multi-tier fallback |
 
 ### 👨‍👩‍👧 Pillar 3: Care Anchor Network (Family Connectivity)
 | Aspect | Detail |
 |--------|--------|
-| **Real-time Sync** | Patient data (meds, vitals, alerts) syncs instantly across all linked family devices via Firebase Firestore |
-| **Caregiver Portal** | Dedicated secure portal for family members to monitor adherence, schedule appointments & log vitals |
-| **SOS Emergency** | One-tap emergency trigger sends cloud alert + GPS telemetry to all linked anchors |
+| **Real-time Sync** | Patient data (meds, vitals, alerts) syncs instantly via Firebase Firestore |
+| **QR Linking** | Patient shares a unique QR code to link family member devices instantly |
+| **Caregiver Portal** | Secure portal for family members to monitor adherence, schedule appointments & log vitals |
+| **SOS Emergency** | One-tap emergency trigger sends cloud alert to all linked care anchors |
 
 ---
 
@@ -76,11 +95,12 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 | 🏢 **Care Anchor Portal** | Secure portal for caregivers to monitor adherence, schedule appointments & log vitals |
 | 👤 **Medical Profile Editor** | Manage patient identity, age & chronic health notes in the PHI cloud vault |
 | 📅 **Health Calendar** | Dynamic scheduling — caregiver-set appointments sync to patient's dashboard |
-| 🆘 **Intelligent SOS** | One-tap emergency with cloud alerts & GPS telemetry |
-| 🌍 **Vernacular Voice** | Complete voice support for 9 Indian languages |
+| 🆘 **Intelligent SOS** | One-tap emergency with cloud alerts to linked care anchors |
+| 🌍 **Vernacular Voice** | Complete voice support for 5 Indian languages on mobile, 9 on web |
 | 💊 **Medication Tracker** | 7-day adherence visualization with pill streaks & reminders |
 | 🧘 **Wellness Hub** | Guided yoga routines, wellness tips & activity tracking |
 | 📊 **Health Insights** | Adherence trends, health score & weekly AI-generated reports |
+| 🔗 **QR Anchor Linking** | Share your Care Anchor QR code to securely link family members |
 
 ---
 
@@ -88,11 +108,11 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 
 | Screen | Purpose |
 |--------|---------|
-| **Login** | Google Sign-In authentication |
-| **Dashboard** | Today's meds, appointments, SOS access, vitals summary |
+| **Login** | Google Sign-In authentication (Firebase Auth + Google OAuth 2.0) |
+| **Dashboard** | Today's meds, appointments, SOS access, QR anchor linking |
 | **Scanner** | Camera/gallery → AI extraction → voice readout |
 | **Details** | Parsed medicines with dosage, frequency & language selector |
-| **Meds** | 7-day adherence chart, pill streaks, reminders |
+| **Meds** | Adherence tracking, pill streaks, reminders |
 | **Wellness** | Yoga routines, wellness tips, activity tracking |
 | **Insights** | Adherence analytics, health score, weekly reports |
 | **Care Anchor Portal** | Remote family monitoring & appointment scheduling |
@@ -119,23 +139,23 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 └───────┼────────────────────────────┼────────────────────────────┘
         │                            │
         ▼                            ▼
-┌───────────────────┐    ┌──────────────────────────┐
-│  CLOUD INTELLIGENCE│    │   CLOUD SYNC LAYER       │
-│                   │    │                          │
-│  🧠 Google AI      │    │  ☁️ Firebase Firestore    │
-│  gemini-2.0-flash │    │  (Real-time NoSQL)       │
-│       │           │    │                          │
-│       ▼           │    │  🔐 Firebase Auth         │
-│  ⚡ Groq LPU       │    │  (Google Sign-In)        │
-│  (Fallback)       │    │                          │
-└───────────────────┘    └─────────┬────────────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-                    ▼                             ▼
-           ┌───────────────┐            ┌──────────────┐
-           │ 👨‍👩‍👧 Care Anchor │            │ 🆘 SOS Alert  │
-           │ Family Portal  │            │ GPS + Notify  │
-           └───────────────┘            └──────────────┘
+┌───────────────────────┐    ┌──────────────────────────┐
+│  CLOUD INTELLIGENCE   │    │   CLOUD SYNC LAYER       │
+│                       │    │                          │
+│  🧠 Gemini 2.5 Flash  │    │  ☁️ Firebase Firestore    │
+│  (Google REST API)    │    │  (Real-time NoSQL)       │
+│       │               │    │                          │
+│       ▼               │    │  🔐 Firebase Auth         │
+│  🔀 OpenRouter AI     │    │  (Google Sign-In)        │
+│  (Multi-model cascade)│    │                          │
+│  • gemini-2.5-flash   │    └─────────┬────────────────┘
+│  • qwen3.6-plus:free  │              │
+│  • gemma-3-27b-it:free│    ┌─────────┼──────────────┐
+└───────────────────────┘    ▼                        ▼
+                    ┌───────────────┐       ┌──────────────┐
+                    │ 👨‍👩‍👧 Care Anchor │       │ 🆘 SOS Alert  │
+                    │ Family Portal  │       │ Cloud Notify  │
+                    └───────────────┘       └──────────────┘
 ```
 
 ---
@@ -146,11 +166,12 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 |-------|-----------|-----|
 | **Mobile Core** | React Native (Expo SDK 54) | Cross-platform, OTA updates, rapid iteration |
 | **Web Frontend** | React 19 + TypeScript + Vite | Premium glassmorphism UI for desktop access |
-| **AI Vision** | Google Generative AI (Gemini 2.0 Flash) | Best-in-class handwriting OCR & medical understanding |
-| **AI Fallback** | Groq LPU (Llama 3.2 11B Vision) | Ultra-low latency inference fallback |
+| **AI Vision (Primary)** | Google Generative AI (Gemini 2.5 Flash) | Best-in-class handwriting OCR & medical understanding |
+| **AI Vision (Fallback)** | OpenRouter AI — multi-model cascade | Resilient inference: Qwen 3.6+, Gemma 3 27B as fallbacks |
 | **Authentication** | Firebase Auth + Google Sign-In | Zero-friction elderly-friendly login |
 | **Real-time DB** | Firebase Firestore | Instant cross-device family sync |
-| **Voice Engine** | expo-speech / Web Speech API | Native regional language synthesis |
+| **Voice Engine (Mobile)** | expo-speech | Native regional language synthesis on Android |
+| **Voice Engine (Web)** | Web Speech API | Browser-native TTS with async voice loading |
 | **Local Storage** | AsyncStorage (mobile) / localStorage (web) | PHI Vault — zero-knowledge architecture |
 | **Build & Deploy** | EAS Build (Expo Application Services) | Cloud-compiled APK generation |
 | **Styling** | Vanilla CSS + Heart-Magenta Theme | Premium glassmorphism aesthetic |
@@ -173,34 +194,65 @@ AarogyaVani operates on a **Zero-Knowledge, On-Device Architecture**:
 
 ## 🛠️ Setup & Installation
 
+### Prerequisites
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- EAS CLI (`npm install -g eas-cli`)
+- An Android device or emulator
+
 ### 1. Clone & Install
 ```bash
 git clone https://github.com/Anand2k29/AarogyaVani-GenAI.git
-cd AarogyaVani
+```
+
+**Install Mobile App dependencies:**
+```bash
+cd AarogyaVani/AarogyaVani
+npm install
+```
+
+**Install Web App dependencies:**
+```bash
+cd AarogyaVani   # root folder
 npm install
 ```
 
 ### 2. Environment Configuration
-Create a `.env` file in the `AarogyaVani/` directory:
+
+Create a `.env` file inside the `AarogyaVani/AarogyaVani/` directory:
 ```dotenv
-EXPO_PUBLIC_GROQ_API_KEY=your_groq_api_key
-EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID=your_google_client_id
+# Option A: Use Gemini directly (recommended)
+EXPO_PUBLIC_GEMINI_API_KEY=AIza...your_google_ai_key
+
+# Option B: Use OpenRouter (free tier available)
+EXPO_PUBLIC_OPENROUTER_API_KEY=sk-or-v1-...your_openrouter_key
+
+# Firebase Google Sign-In
+EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID=your_google_oauth_client_id
 ```
 
-### 3. Run Mobile App
+Create a `.env.local` file inside the root `AarogyaVani/` folder for the web app:
+```dotenv
+VITE_GEMINI_API_KEY=AIza...your_google_ai_key
+VITE_GROQ_API_KEY=your_groq_api_key
+```
+
+### 3. Run Mobile App (Development)
 ```bash
+cd AarogyaVani/AarogyaVani
 npx expo start
 ```
 Scan the QR code with **Expo Go** on your Android device, or press `a` to launch on an Android emulator.
 
-### 4. Build APK (Optional)
+### 4. Build APK via EAS
 ```bash
+cd AarogyaVani/AarogyaVani
 npx eas build --platform android --profile preview
 ```
 
 ### 5. Run Web Version
 ```bash
-cd ..
+cd AarogyaVani   # root folder
 npm run dev
 ```
 
@@ -219,11 +271,33 @@ npm run dev
 
 ## 🏆 Unique Selling Propositions (USPs)
 
+- 👨‍👩‍👧 **Care Anchor Connectivity** — Syncs seniors directly with tech-savvy family members via QR linking
 - 🌍 **Inclusive by Design** — Built for rural, elderly, and low-literacy users, not just urban tech-savvy ones
-- 🗣️ **Native Vernacular Voice** — Seamless voice instructions in 9 Indian languages
+- 🗣️ **Native Vernacular Voice** — Seamless voice instructions in 5 Indian languages on mobile, 9 on web
 - 🛡️ **Absolute Data Privacy** — Zero-knowledge PHI Vault with 100% on-device storage
 - 📸 **Zero Manual Entry** — AI Vision Engine auto-extracts from prescription photos
-- 👨‍👩‍👧 **Care Anchor Connectivity** — Syncs seniors directly with tech-savvy family members
+- 🔀 **Resilient AI Pipeline** — Multi-model cascade ensures 99%+ uptime even when individual APIs are down
+
+---
+
+## 📋 Changelog
+
+### v1.3 — April 6, 2026 *(Current)*
+- 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
+- 🔑 **Smart Key Routing** — Auto-detects `AIza...` Gemini keys vs OpenRouter keys
+- 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile
+- 🔗 **QR Anchor Linking** — New QR code modal for linking care anchor family members
+- 🏗️ **Firebase New Architecture** — `newArchEnabled: true` for React Native New Architecture
+
+### v1.2 — April 6, 2026
+- 🌍 Multi-language audio support (9 languages on web, 5 on mobile)
+- 🔊 Smart voice fallback system for missing regional voices
+- 💊 Enhanced medication tracker with adherence logging
+
+### v1.1 — March 2026
+- ✅ Initial EAS cloud build (APK)
+- 🔐 Firebase Auth with Google Sign-In
+- 📸 Prescription scanner with Gemini vision
 
 ---
 
