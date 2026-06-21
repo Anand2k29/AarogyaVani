@@ -21,14 +21,14 @@
 ## 📥 Download APK
 
 > **Latest Stable Build (April 7, 2026):**
-> 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/fPWWfEata5r2rhUKSJpWVw.apk)**
+> 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/5rzSeECxEKS9H7WgHTDnGe.apk)**
 
 > [!NOTE]
 > You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **May 6, 2026**.
 
 | Build Detail | Value |
 |---|---|
-| **Build ID** | `fPWWfEata5r2rhUKSJpWVw` |
+| **Build ID** | `5rzSeECxEKS9H7WgHTDnGe` |
 | **Platform** | Android |
 | **Profile** | `preview` (APK) |
 | **SDK Version** | Expo SDK 54 |
