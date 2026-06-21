@@ -104,6 +104,11 @@ export async function decodePrescriptionText(
 
     if (!geminiSuccess) {
         // Route 2: OpenRouter Fallback System
+        const openRouterKey = (providedKey && !providedKey.startsWith('AIza')) ? providedKey : envOpenRouter;
+        if (!openRouterKey) {
+            throw new Error(`Prescription decoding failed. Google API failed (Leaked/Invalid key), and no OpenRouter fallback key found.`);
+        }
+
         let lastError: Error | null = null;
         for (const model of OPENROUTER_MODELS) {
             try {
@@ -123,7 +128,7 @@ export async function decodePrescriptionText(
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${key}`,
+                        "Authorization": `Bearer ${openRouterKey}`,
                         "Content-Type": "application/json",
                         "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://aarogyavani.app",
                         "X-Title": "AarogyaVani"
