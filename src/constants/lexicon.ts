@@ -167,6 +167,12 @@ export const lexicon = {
         close: "Close",
         loading: "Loading...",
         per_day: "per day",
+        cb_title: "AarogyaVani Assistant",
+        cb_subtitle: "AI MEDICAL CONSULTATION",
+        cb_placeholder: "Ask symptoms or health advice...",
+        cb_speak: "Speak Message",
+        cb_listen: "Listen to Message",
+        cb_welcome: "Namaste! I am AarogyaVani's AI assistant. I can help answer medical questions, check symptoms, or give health guidance. How can I help you today?",
     },
     kn: {
         // App-level
@@ -334,6 +340,12 @@ export const lexicon = {
         close: "ಮುಚ್ಚಿ",
         loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
         per_day: "ದಿನಕ್ಕೆ",
+        cb_title: "ಆರೋಗ್ಯವಾಣಿ ಸಹಾಯಕ",
+        cb_subtitle: "AI ವೈದ್ಯಕೀಯ ಸಮಾಲೋಚನೆ",
+        cb_placeholder: "ರೋಗಲಕ್ಷಣಗಳು ಅಥವಾ ಆರೋಗ್ಯ ಸಲಹೆಯನ್ನು ಕೇಳಿ...",
+        cb_speak: "ಸಂದೇಶವನ್ನು ಮಾತನಾಡಿ",
+        cb_listen: "ಸಂದೇಶವನ್ನು ಆಲಿಸಿ",
+        cb_welcome: "ನಮಸ್ತೆ! ನಾನು ಆರೋಗ್ಯವಾಣಿಯ ಎಐ ಸಹಾಯಕ. ನಾನು ಆರೋಗ್ಯ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಲು, ರೋಗಲಕ್ಷಣಗಳನ್ನು ಪರೀಕ್ಷಿಸಲು ಅಥವಾ ಮಾರ್ಗದರ್ಶನ ನೀಡಲು ಸಹಾಯ ಮಾಡಬಹುದು. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
     },
     hi: {
         // App-level
@@ -501,5 +513,11 @@ export const lexicon = {
         close: "बंद करें",
         loading: "लोड हो रहा है...",
         per_day: "प्रतिदिन",
+        cb_title: "आरोग्यवाणी सहायक",
+        cb_subtitle: "एआई चिकित्सा परामर्श",
+        cb_placeholder: "लक्षण या स्वास्थ्य संबंधी सलाह पूछें...",
+        cb_speak: "संदेश बोलें",
+        cb_listen: "संदेश सुनें",
+        cb_welcome: "नमस्ते! मैं आरोग्यवाणी का एआई सहायक हूँ। मैं स्वास्थ्य संबंधी प्रश्नों के उत्तर देने, लक्षणों की जांच करने या मार्गदर्शन करने में मदद कर सकता हूँ। आज मैं आपकी क्या सहायता कर सकता हूँ?",
     }
 };

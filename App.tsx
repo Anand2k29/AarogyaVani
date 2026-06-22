@@ -481,8 +481,8 @@ AI RESPONSE:`;
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 22 }}>🩺</span>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>AarogyaVani Assistant</h4>
-                  <p style={{ margin: 0, fontSize: 10, opacity: 0.85, fontWeight: 700 }}>AI MEDICAL CONSULTATION</p>
+                  <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>{t('cb_title')}</h4>
+                  <p style={{ margin: 0, fontSize: 10, opacity: 0.85, fontWeight: 700 }}>{t('cb_subtitle')}</p>
                 </div>
               </div>
               <button 
@@ -522,7 +522,7 @@ AI RESPONSE:`;
                   <div key={idx} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: 6 }}>
                     {!isUser && (
                       <button 
-                        onClick={() => handlePlayTTS(msg.text)}
+                        onClick={() => handlePlayTTS(idx === 0 ? t('cb_welcome') : msg.text)}
                         style={{
                           background: s.subtle,
                           border: `1px solid ${s.border}`,
@@ -538,7 +538,7 @@ AI RESPONSE:`;
                           transition: 'all 0.2s',
                           flexShrink: 0
                         }}
-                        title="Listen to Message"
+                        title={t('cb_listen')}
                       >
                         🔊
                       </button>
@@ -552,7 +552,9 @@ AI RESPONSE:`;
                       border: isUser ? 'none' : `1px solid ${s.border}`,
                       boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
                     }}>
-                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>{msg.text}</p>
+                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>
+                        {idx === 0 && !isUser ? t('cb_welcome') : msg.text}
+                      </p>
                       <span style={{ display: 'block', fontSize: 9, textAlign: 'right', marginTop: 3, opacity: 0.6, color: isUser ? '#fff' : s.txtMuted }}>
                         {msg.time}
                       </span>
@@ -596,7 +598,7 @@ AI RESPONSE:`;
               }}>
                 <input
                   type="text"
-                  placeholder="Ask symptoms or health advice..."
+                  placeholder={t('cb_placeholder')}
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
@@ -629,7 +631,7 @@ AI RESPONSE:`;
                     transition: 'all 0.2s',
                     position: 'relative'
                   }}
-                  title="Speak Message"
+                  title={t('cb_speak')}
                 >
                   <div style={{ width: 14, height: 14 }}>
                     <MicIcon />
