@@ -397,319 +397,318 @@ AI RESPONSE:`;
     reset();
   };
 
-  const AskAIAssistant = () => {
-    const chatEndRef = useRef<HTMLDivElement>(null);
+  // ── Chat Widget Helpers (in parent scope to avoid re-creation) ──
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-      if (isChatOpen) {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, [chatMessages, isChatOpen]);
+  useEffect(() => {
+    if (isChatOpen) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isChatOpen]);
 
-    const handleVoiceInput = () => {
-      if (!('webkitSpeechRecognition' in window)) {
-        alert("Speech recognition not supported in this browser.");
-        return;
-      }
-      setIsChatListening(true);
-      const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.lang = currentLang === 'en' ? 'en-US' : currentLang === 'kn' ? 'kn-IN' : 'hi-IN';
-      
-      recognition.onresult = async (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setIsChatListening(false);
-        setChatInput(transcript);
-        await sendChatMessage(transcript);
-      };
-
-      recognition.onerror = () => setIsChatListening(false);
-      recognition.onend = () => setIsChatListening(false);
-      recognition.start();
+  const handleChatVoiceInput = useCallback(() => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert("Speech recognition not supported in this browser.");
+      return;
+    }
+    setIsChatListening(true);
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.lang = currentLang === 'en' ? 'en-US' : currentLang === 'kn' ? 'kn-IN' : 'hi-IN';
+    
+    recognition.onresult = async (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIsChatListening(false);
+      setChatInput(transcript);
+      await sendChatMessage(transcript);
     };
 
-    const handlePlayTTS = (text: string) => {
-      const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
-      const currentVoice = langMapping[currentLang] || 'hinglish';
-      TTSEngine.speakInstruction(text, currentVoice as any);
-    };
+    recognition.onerror = () => setIsChatListening(false);
+    recognition.onend = () => setIsChatListening(false);
+    recognition.start();
+  }, [currentLang, sendChatMessage]);
 
-    if (isAnchor) return null;
+  const handlePlayTTS = useCallback((text: string) => {
+    const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
+    const currentVoice = langMapping[currentLang] || 'hinglish';
+    TTSEngine.speakInstruction(text, currentVoice as any);
+  }, [currentLang]);
 
-    const widgetBottom = isDesktop ? 30 : 88;
-    const widgetRight = isDesktop ? 30 : 16;
-    const widgetWidth = isDesktop ? 385 : 'calc(100vw - 32px)';
-    const widgetHeight = isDesktop ? 500 : 'calc(100vh - 180px)';
+  const chatWidgetBottom = isDesktop ? 30 : 88;
+  const chatWidgetRight = isDesktop ? 30 : 16;
+  const chatWidgetWidth = isDesktop ? 385 : 'calc(100vw - 32px)';
+  const chatWidgetHeight = isDesktop ? 500 : 'calc(100vh - 180px)';
 
-    return (
-      <div style={{ position: 'fixed', bottom: widgetBottom, right: widgetRight, zIndex: 999, fontFamily: 'Inter, system-ui, sans-serif' }}>
-        {/* Chat Widget Panel */}
-        {isChatOpen && (
-          <div className="fade-up" style={{
-            position: 'absolute',
-            bottom: 76,
-            right: 0,
-            width: widgetWidth,
-            height: widgetHeight,
-            maxHeight: 520,
-            background: 'rgba(255, 255, 255, 0.96)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1.5px solid ${s.border}`,
-            borderRadius: 28,
-            boxShadow: '0 20px 60px rgba(232, 84, 122, 0.16)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            animation: 'chatAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <style>{`
-              @keyframes chatAppear {
-                from { opacity: 0; transform: translateY(20px) scale(0.95); }
-                to { opacity: 1; transform: translateY(0) scale(1); }
-              }
-            `}</style>
-            
-            {/* Header */}
-            <div style={{
-              padding: '16px 20px',
-              background: `linear-gradient(135deg, ${s.accent}, #D43369)`,
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 22 }}>🩺</span>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>{t('cb_title')}</h4>
-                  <p style={{ margin: 0, fontSize: 10, opacity: 0.85, fontWeight: 700 }}>{t('cb_subtitle')}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsChatOpen(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: 28,
-                  height: 28,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 900
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Chat History Panel */}
-            <div style={{
-              flex: 1,
-              padding: '16px',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              background: '#FFFDFE'
-            }}>
-              {chatMessages.map((msg, idx) => {
-                const isUser = msg.sender === 'user';
-                return (
-                  <div key={idx} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: 6 }}>
-                    {!isUser && (
-                      <button 
-                        onClick={() => handlePlayTTS(idx === 0 ? t('cb_welcome') : msg.text)}
-                        style={{
-                          background: s.subtle,
-                          border: `1px solid ${s.border}`,
-                          borderRadius: '50%',
-                          width: 26,
-                          height: 26,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          fontSize: 11,
-                          color: s.accent,
-                          transition: 'all 0.2s',
-                          flexShrink: 0
-                        }}
-                        title={t('cb_listen')}
-                      >
-                        🔊
-                      </button>
-                    )}
-                    <div style={{
-                      maxWidth: '75%',
-                      padding: '10px 14px',
-                      borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                      background: isUser ? s.accent : 'rgba(232,84,122,0.06)',
-                      color: isUser ? '#fff' : s.txtPri,
-                      border: isUser ? 'none' : `1px solid ${s.border}`,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
-                    }}>
-                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>
-                        {idx === 0 && !isUser ? t('cb_welcome') : msg.text}
-                      </p>
-                      <span style={{ display: 'block', fontSize: 9, textAlign: 'right', marginTop: 3, opacity: 0.6, color: isUser ? '#fff' : s.txtMuted }}>
-                        {msg.time}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {isChatLoading && (
-                <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 32 }}>
-                  <div style={{ background: 'rgba(232,84,122,0.05)', border: `1px solid ${s.border}`, padding: '10px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0s' }} />
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.2s' }} />
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.4s' }} />
-                  </div>
-                  <style>{`
-                    @keyframes bounceChat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-                  `}</style>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input Bar */}
-            <div style={{
-              padding: '12px 16px',
-              borderTop: `1px solid ${s.border}`,
-              background: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}>
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                background: '#FFF5F8',
-                border: `1.5px solid ${s.border}`,
-                borderRadius: 18,
-                padding: '4px 10px'
-              }}>
-                <input
-                  type="text"
-                  placeholder={t('cb_placeholder')}
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '8px 4px',
-                    fontSize: 13.5,
-                    color: s.txtPri,
-                    outline: 'none',
-                    fontFamily: 'Inter, system-ui, sans-serif'
-                  }}
-                />
-                
-                {/* Voice Dictation Button */}
-                <button
-                  onClick={handleVoiceInput}
-                  style={{
-                    background: isChatListening ? s.red : 'transparent',
-                    border: 'none',
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: isChatListening ? '#fff' : s.accent,
-                    transition: 'all 0.2s',
-                    position: 'relative'
-                  }}
-                  title={t('cb_speak')}
-                >
-                  <div style={{ width: 14, height: 14 }}>
-                    <MicIcon />
-                  </div>
-                  {isChatListening && (
-                    <div style={{
-                      position: 'absolute',
-                      inset: -4,
-                      border: `1.5px solid ${s.red}`,
-                      borderRadius: '50%',
-                      animation: 'pulseChatRing 1.2s infinite'
-                    }} />
-                  )}
-                  <style>{`
-                    @keyframes pulseChatRing {
-                      0% { transform: scale(1); opacity: 1; }
-                      100% { transform: scale(1.4); opacity: 0; }
-                    }
-                  `}</style>
-                </button>
-              </div>
-              
-              {/* Send Button */}
-              <button
-                onClick={() => sendChatMessage()}
-                style={{
-                  background: s.accent,
-                  border: 'none',
-                  borderRadius: 16,
-                  width: 36,
-                  height: 36,
-                  cursor: 'pointer',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 14,
-                  fontWeight: 900,
-                  boxShadow: '0 4px 10px rgba(232,84,122,0.2)'
-                }}
-              >
-                ➔
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Bubble Button */}
-        <button
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: '50%',
+  // Render the chat widget as inline JSX (not a nested component) to prevent
+  // unmount/remount on every parent re-render (which caused severe input lag).
+  const chatWidgetJSX = isAnchor ? null : (
+    <div style={{ position: 'fixed', bottom: chatWidgetBottom, right: chatWidgetRight, zIndex: 999, fontFamily: 'Inter, system-ui, sans-serif' }}>
+      {/* Chat Widget Panel */}
+      {isChatOpen && (
+        <div className="fade-up" style={{
+          position: 'absolute',
+          bottom: 76,
+          right: 0,
+          width: chatWidgetWidth,
+          height: chatWidgetHeight,
+          maxHeight: 520,
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: `1.5px solid ${s.border}`,
+          borderRadius: 28,
+          boxShadow: '0 20px 60px rgba(232, 84, 122, 0.16)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          animation: 'chatAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <style>{`
+            @keyframes chatAppear {
+              from { opacity: 0; transform: translateY(20px) scale(0.95); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
+          
+          {/* Header */}
+          <div style={{
+            padding: '16px 20px',
             background: `linear-gradient(135deg, ${s.accent}, #D43369)`,
-            border: 'none',
+            color: '#fff',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 30px rgba(232,84,122,0.38)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            transform: isChatOpen ? 'scale(0.9) rotate(90deg)' : 'scale(1) rotate(0deg)'
-          }}
-          title="AarogyaVani AI Chatbot"
-        >
-          <span style={{ fontSize: 26, color: '#fff' }}>💬</span>
-        </button>
-      </div>
-    );
-  };
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 22 }}>🩺</span>
+              <div>
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>{t('cb_title')}</h4>
+                <p style={{ margin: 0, fontSize: 10, opacity: 0.85, fontWeight: 700 }}>{t('cb_subtitle')}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setIsChatOpen(false)}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 28,
+                height: 28,
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 900
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Chat History Panel */}
+          <div style={{
+            flex: 1,
+            padding: '16px',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            background: '#FFFDFE'
+          }}>
+            {chatMessages.map((msg, idx) => {
+              const isUser = msg.sender === 'user';
+              return (
+                <div key={idx} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: 6 }}>
+                  {!isUser && (
+                    <button 
+                      onClick={() => handlePlayTTS(idx === 0 ? t('cb_welcome') : msg.text)}
+                      style={{
+                        background: s.subtle,
+                        border: `1px solid ${s.border}`,
+                        borderRadius: '50%',
+                        width: 26,
+                        height: 26,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: 11,
+                        color: s.accent,
+                        transition: 'all 0.2s',
+                        flexShrink: 0
+                      }}
+                      title={t('cb_listen')}
+                    >
+                      🔊
+                    </button>
+                  )}
+                  <div style={{
+                    maxWidth: '75%',
+                    padding: '10px 14px',
+                    borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                    background: isUser ? s.accent : 'rgba(232,84,122,0.06)',
+                    color: isUser ? '#fff' : s.txtPri,
+                    border: isUser ? 'none' : `1px solid ${s.border}`,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
+                  }}>
+                    <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>
+                      {idx === 0 && !isUser ? t('cb_welcome') : msg.text}
+                    </p>
+                    <span style={{ display: 'block', fontSize: 9, textAlign: 'right', marginTop: 3, opacity: 0.6, color: isUser ? '#fff' : s.txtMuted }}>
+                      {msg.time}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {isChatLoading && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 32 }}>
+                <div style={{ background: 'rgba(232,84,122,0.05)', border: `1px solid ${s.border}`, padding: '10px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0s' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.2s' }} />
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.4s' }} />
+                </div>
+                <style>{`
+                  @keyframes bounceChat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+                `}</style>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input Bar */}
+          <div style={{
+            padding: '12px 16px',
+            borderTop: `1px solid ${s.border}`,
+            background: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              background: '#FFF5F8',
+              border: `1.5px solid ${s.border}`,
+              borderRadius: 18,
+              padding: '4px 10px'
+            }}>
+              <input
+                type="text"
+                placeholder={t('cb_placeholder')}
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '8px 4px',
+                  fontSize: 13.5,
+                  color: s.txtPri,
+                  outline: 'none',
+                  fontFamily: 'Inter, system-ui, sans-serif'
+                }}
+              />
+              
+              {/* Voice Dictation Button */}
+              <button
+                onClick={handleChatVoiceInput}
+                style={{
+                  background: isChatListening ? s.red : 'transparent',
+                  border: 'none',
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isChatListening ? '#fff' : s.accent,
+                  transition: 'all 0.2s',
+                  position: 'relative'
+                }}
+                title={t('cb_speak')}
+              >
+                <div style={{ width: 14, height: 14 }}>
+                  <MicIcon />
+                </div>
+                {isChatListening && (
+                  <div style={{
+                    position: 'absolute',
+                    inset: -4,
+                    border: `1.5px solid ${s.red}`,
+                    borderRadius: '50%',
+                    animation: 'pulseChatRing 1.2s infinite'
+                  }} />
+                )}
+                <style>{`
+                  @keyframes pulseChatRing {
+                    0% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(1.4); opacity: 0; }
+                  }
+                `}</style>
+              </button>
+            </div>
+            
+            {/* Send Button */}
+            <button
+              onClick={() => sendChatMessage()}
+              style={{
+                background: s.accent,
+                border: 'none',
+                borderRadius: 16,
+                width: 36,
+                height: 36,
+                cursor: 'pointer',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                fontWeight: 900,
+                boxShadow: '0 4px 10px rgba(232,84,122,0.2)'
+              }}
+            >
+              ➔
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bubble Button */}
+      <button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: '50%',
+          background: `linear-gradient(135deg, ${s.accent}, #D43369)`,
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 30px rgba(232,84,122,0.38)',
+          cursor: 'pointer',
+          transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          transform: isChatOpen ? 'scale(0.9) rotate(90deg)' : 'scale(1) rotate(0deg)'
+        }}
+        title="AarogyaVani AI Chatbot"
+      >
+        <span style={{ fontSize: 26, color: '#fff' }}>💬</span>
+      </button>
+    </div>
+  );
 
   // ── Auth gate ────────────────────────────────────────
   if (!user) {
     return (
       <>
         <AuthPage isDark={isDark} onAuth={(u) => setUser(u)} />
-        <AskAIAssistant />
+        {chatWidgetJSX}
       </>
     );
   }
@@ -933,7 +932,7 @@ AI RESPONSE:`;
     );
   };
 
-  // AskAIAssistant component relocated to above auth gate to prevent hoisting errors.
+  // chatWidgetJSX is rendered inline (not as a nested component) to prevent unmount/remount lag.
 
   const NavTabs = () => (
     <nav style={{ height: 72, background: 'rgba(255,255,255,0.96)', borderTop: `1px solid ${s.border}`, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', padding: '0 8px' }}>
@@ -1177,7 +1176,7 @@ AI RESPONSE:`;
             </div>
           </div>
         )}
-        {!isAnchor && <AskAIAssistant />}
+        {chatWidgetJSX}
       </div>
     );
   }
@@ -1274,7 +1273,7 @@ AI RESPONSE:`;
       {/* Nav tabs for mobile */}
       {!isDesktop && <NavTabs />}
 
-      {!isAnchor && <AskAIAssistant />}
+      {chatWidgetJSX}
 
       {/* Global SOS for anchor */}
       <GlobalSOSOverlay />
