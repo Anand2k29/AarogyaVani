@@ -136,8 +136,9 @@ export default function App() {
       let aiText = '';
 
       if (activeApiKey) {
-        const resolvedLanguage = currentLang === 'hi' ? 'Hindi' : currentLang === 'kn' ? 'Kannada' : 'English';
-        const systemPrompt = `You are a helpful and compassionate healthcare AI assistant on AarogyaVani. Your goal is to guide the user (usually elderly or their family members) through medical questions, symptom triage, and general healthcare queries.
+        try {
+          const resolvedLanguage = currentLang === 'hi' ? 'Hindi' : currentLang === 'kn' ? 'Kannada' : 'English';
+          const systemPrompt = `You are a helpful and compassionate healthcare AI assistant on AarogyaVani. Your goal is to guide the user (usually elderly or their family members) through medical questions, symptom triage, and general healthcare queries.
 Respond strictly and natively in the ${resolvedLanguage} script (e.g. Hindi in Devanagari script, Kannada in Kannada script).
 Keep responses brief, supportive, polite, and extremely clear. Use bullet points for steps.
 If the symptoms described sound severe or life-threatening (e.g. crushing chest pain, paralysis, severe shortness of breath), instruct them to call Ambulance (108) or tap the red SOS button immediately.
@@ -146,33 +147,38 @@ ${currentHistory.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n')}
 USER: ${msgText}
 AI RESPONSE:`;
 
-        if (activeApiKey.startsWith('AIza')) {
-          const genAI = new GoogleGenerativeAI(activeApiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-          const result = await model.generateContent(systemPrompt);
-          aiText = result.response.text();
-        } else {
-          // OpenRouter fallback
-          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${activeApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: 'google/gemini-2.5-flash',
-              messages: [{ role: 'user', content: systemPrompt }],
-              temperature: 0.3
-            })
-          });
-          if (response.ok) {
-            const data = await response.json();
-            aiText = data.choices?.[0]?.message?.content || 'Done';
+          if (activeApiKey.startsWith('AIza')) {
+            const genAI = new GoogleGenerativeAI(activeApiKey);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            const result = await model.generateContent(systemPrompt);
+            aiText = result.response.text();
           } else {
-            throw new Error(`HTTP ${response.status}`);
+            // OpenRouter fallback
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${activeApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [{ role: 'user', content: systemPrompt }],
+                temperature: 0.3
+              })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              aiText = data.choices?.[0]?.message?.content || 'Done';
+            } else {
+              throw new Error(`HTTP ${response.status}`);
+            }
           }
+        } catch (apiErr) {
+          console.warn("API request failed, falling back to offline mode:", apiErr);
         }
-      } else {
+      }
+
+      if (!aiText) {
         // Pre-programmed Rule-Based Responses
         await new Promise(resolve => setTimeout(resolve, 1000));
         const lowerMsg = msgText.toLowerCase();
