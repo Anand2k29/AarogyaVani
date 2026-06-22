@@ -292,12 +292,12 @@ npm run dev
 - 🔗 **QR Anchor Linking** — New QR code modal for linking care anchor family members
 - 🏗️ **Firebase New Architecture** — `newArchEnabled: true` for React Native New Architecture
 
-### v1.2 — April 6, 2026
+### v1.2 — May 2, 2026
 - 🌍 Multi-language audio support (9 languages on web, 5 on mobile)
 - 🔊 Smart voice fallback system for missing regional voices
 - 💊 Enhanced medication tracker with adherence logging
 
-### v1.1 — March 2026
+### v1.1 — May 2, 2026
 - ✅ Initial EAS cloud build (APK)
 - 🔐 Firebase Auth with Google Sign-In
 - 📸 Prescription scanner with Gemini vision
