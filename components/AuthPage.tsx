@@ -117,7 +117,7 @@ const HealthcareIllustration = () => (
         <text x="384" y="258" textAnchor="middle" fill="#9B7A87" fontSize="9.5" fontWeight="600" fontFamily="Inter">🔔 Reminder On</text>
         <rect x="22" y="220" width="88" height="30" rx="15" fill="white" />
         <rect x="22" y="220" width="88" height="30" rx="15" stroke="rgba(232,84,122,0.22)" strokeWidth="1.5" />
-        <text x="66" y="238" textAnchor="middle" fill="#E8547A" fontSize="9.5" fontWeight="600" fontFamily="Inter">3 Languages 🌐</text>
+        <text x="66" y="238" textAnchor="middle" fill="#E8547A" fontSize="9.5" fontWeight="600" fontFamily="Inter">9 Languages 🌐</text>
     </svg>
 );
 
@@ -126,6 +126,7 @@ const FEATURES = [
     { icon: '📄', title: 'AI Prescription Scanner', desc: "Reads doctor's handwriting & explains medicines in plain language" },
     { icon: '🔔', title: 'Smart Reminders', desc: 'Never miss a dose — alerts in Hindi, Kannada or English' },
     { icon: '🛡️', title: 'Care Anchor', desc: 'Family monitors remotely & gets instant SOS alerts' },
+    { icon: '🚑', title: 'Healthcare & Emergency Integration', desc: 'Seamlessly connects with local doctors, hospitals, and emergency services for real-time support' },
     { icon: '📈', title: 'Vitals Tracker', desc: 'Log BP, blood sugar & SpO₂, visualise trends over time' },
     { icon: '🧘', title: 'Yoga & Wellness', desc: 'Guided exercises and breathing routines for elderly care' },
     { icon: '🔒', title: 'PHI Vault', desc: 'Store health records on-device — zero cloud upload, ever' },
@@ -159,8 +160,8 @@ const VISION_CARDS = [
 ];
 
 const STATS = [
-    { value: '3', label: 'Languages' },
-    { value: '6', label: 'Core Features' },
+    { value: '9', label: 'Languages' },
+    { value: '7', label: 'Core Features' },
     { value: 'AI', label: 'Powered' },
     { value: '100%', label: 'Private' },
 ];

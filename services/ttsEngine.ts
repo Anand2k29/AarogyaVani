@@ -55,7 +55,8 @@ export class TTSEngine {
       window.speechSynthesis.cancel();
     } else {
       try {
-        const Speech = require('expo-speech');
+        const moduleName = 'expo-speech';
+        const Speech = require(moduleName);
         Speech.stop();
       } catch (e) {
         console.warn('Expo Speech not available');
@@ -76,7 +77,8 @@ export class TTSEngine {
   private static async playMobileSpeech(text: string, languageCode: string): Promise<void> {
     console.log(`[TTSEngine/Mobile] Firing Expo Speech routing -> [${languageCode}]`);
     try {
-      const Speech = require('expo-speech');
+      const moduleName = 'expo-speech';
+      const Speech = require(moduleName);
       Speech.speak(text, {
         language: languageCode,
         rate: 0.9, 

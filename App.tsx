@@ -15,6 +15,7 @@ import { useLanguage } from './src/context/LanguageContext';
 import { DashboardContent } from './components/DashboardContent';
 import { ScannerContent } from './components/ScannerContent';
 import { InsightsContent } from './components/InsightsContent';
+import { CareConnectContent } from './components/CareConnectContent';
 
 declare global {
   interface Window {
@@ -23,7 +24,7 @@ declare global {
 }
 
 type AppState = 'IDLE' | 'DETECTING' | 'SUCCESS' | 'ERROR';
-type MainTab = 'dashboard' | 'scanner' | 'companion' | 'reminders' | 'calendar' | 'sos' | 'insights' | 'ai_reports' | 'health';
+type MainTab = 'dashboard' | 'scanner' | 'companion' | 'reminders' | 'calendar' | 'sos' | 'insights' | 'ai_reports' | 'health' | 'care_connect';
 type HealthSubTab = 'vitals' | 'wellness' | 'vault';
 
 const LANGUAGES = [
@@ -52,6 +53,7 @@ const ChevIcon = () => <Icon d="M6 9l6 6 6-6" />;
 const LogoutIcon = () => <Icon d={['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9']} />;
 const UserIcon = () => <Icon d={['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z']} />;
 const SettingsIcon = () => <Icon d={['M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z']} />;
+const CareConnectIcon = () => <Icon d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />;
 
 /* ── Spinner ──────────────────────────────────────────── */
 const Spinner = () => (
@@ -78,7 +80,7 @@ export default function App() {
   const [mainTab, setMainTab] = useState<MainTab>(() => {
     // Read initial tab from URL hash if valid
     const hash = window.location.hash.replace('#', '') as MainTab;
-    const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health'];
+    const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health', 'care_connect'];
     return validTabs.includes(hash) ? hash : 'dashboard';
   });
   const [appState, setAppState] = useState<AppState>('IDLE');
@@ -148,7 +150,7 @@ export default function App() {
     const onPop = (e: PopStateEvent) => {
       // Prioritize the hash in the URL when popping state to ensure correctness across sub-tabs
       const hashStr = window.location.hash.replace('#', '');
-      const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health'];
+      const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health', 'care_connect'];
 
       // Attempt to extract base tab if it's a sub-route (e.g. #health/vitals -> health)
       const baseTab = hashStr.split('/')[0] as MainTab;
@@ -168,7 +170,7 @@ export default function App() {
     } else {
       // Hydrate initial state from hash on load if it exists
       const initialTab = window.location.hash.replace('#', '').split('/')[0] as MainTab;
-      const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health'];
+      const validTabs: MainTab[] = ['dashboard', 'scanner', 'companion', 'reminders', 'calendar', 'sos', 'insights', 'ai_reports', 'health', 'care_connect'];
       if (validTabs.includes(initialTab) && initialTab !== mainTab) {
         setMainTab(initialTab);
       }
@@ -269,6 +271,7 @@ export default function App() {
     { id: 'reminders', label: 'Reminders', IconComp: () => <div style={{ width: 22, height: 22 }}><ClockIcon /></div> },
     { id: 'calendar', label: 'Calendar', IconComp: () => <div style={{ width: 22, height: 22 }}><CalendarIcon /></div> },
     { id: 'health', label: 'My Health', IconComp: () => <div style={{ width: 22, height: 22 }}><Icon d={['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']} /></div> },
+    { id: 'care_connect', label: t('care_connect') || 'Care Connect', IconComp: () => <div style={{ width: 22, height: 22 }}><CareConnectIcon /></div> },
     { id: 'sos', label: t('sos'), IconComp: () => <div style={{ width: 22, height: 22 }}><AlertIcon /></div> },
   ];
   const ANCHOR_TABS: { id: MainTab; label: string; IconComp: React.FC }[] = [
@@ -349,6 +352,7 @@ export default function App() {
     if (mainTab === 'insights') return <InsightsContent s={s} user={user!} />;
     if (mainTab === 'ai_reports') return <AIReports user={user!} s={s} />;
     if (mainTab === 'health') return <PatientHealthTab />;
+    if (mainTab === 'care_connect') return <CareConnectContent s={s} navigateTo={navigateTo} />;
     return null;
   };
 
@@ -558,7 +562,7 @@ export default function App() {
   ═══════════════════════════════════════════════ */
   if (isDesktop) {
     // Group tabs by category for sidebar sections
-    const patientHealthTabs = TABS.filter(t => ['scanner', 'reminders', 'calendar', 'health'].includes(t.id));
+    const patientHealthTabs = TABS.filter(t => ['scanner', 'reminders', 'calendar', 'health', 'care_connect'].includes(t.id));
     const patientSecurityTabs = TABS.filter(t => ['sos'].includes(t.id));
     const anchorMonitorTabs = TABS.filter(t => ['insights', 'reminders', 'calendar'].includes(t.id));
     const anchorToolsTabs = TABS.filter(t => ['ai_reports'].includes(t.id));
@@ -570,7 +574,8 @@ export default function App() {
           const active = mainTab === tab.id;
           const isRed = tab.id === 'sos';
           const isHealth = tab.id === 'health';
-          const tabColor = isRed ? s.red : isHealth ? '#26c6da' : s.accent;
+          const isCareConnect = tab.id === 'care_connect';
+          const tabColor = isRed ? s.red : isHealth ? '#26c6da' : isCareConnect ? '#ab47bc' : s.accent;
           return (
             <button key={tab.id} onClick={() => navigateTo(tab.id)}
               style={{

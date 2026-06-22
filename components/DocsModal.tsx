@@ -74,9 +74,20 @@ const features = [
             </svg>
         ),
         color: '#ffb74d',
-        title: '3 Languages',
-        tag: 'EN · ಕನ · हि',
-        desc: 'Fully multi-lingual. Switch between English, Kannada, and Hindi for both the app UI and AI output. Perfect for rural patients who read in regional scripts.',
+        title: '9 Languages',
+        tag: 'EN · KN · HI · TE · TA · MR · BN · GU · ML',
+        desc: 'Fully multi-lingual. Switch between English, Kannada, Hindi, Telugu, Tamil, Marathi, Bengali, Gujarati, and Malayalam for both the app UI and AI voice output.',
+    },
+    {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+            </svg>
+        ),
+        color: '#ff5252',
+        title: 'Emergency & Care Connect',
+        tag: 'Healthcare & SOS',
+        desc: 'Seamlessly connects with local doctors, hospitals, and emergency services for real-time support and instant booking of consultations.',
     },
 ];
 

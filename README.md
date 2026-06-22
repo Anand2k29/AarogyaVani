@@ -20,11 +20,11 @@
 
 ## 📥 Download APK
 
-> **Latest Stable Build (May 2, 2026):**
+> **Latest Stable Build (June 20, 2026):**
 > 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/5rzSeECxEKS9H7WgHTDnGe.apk)**
 
 > [!NOTE]
-> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **June 2, 2026**.
+> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **Aug 2, 2026**.
 
 | Build Detail | Value |
 |---|---|
@@ -33,8 +33,8 @@
 | **Profile** | `preview` (APK) |
 | **SDK Version** | Expo SDK 54 |
 | **Status** | ✅ FINISHED |
-| **Built At** | May 2, 2026 |
-| **Expires** | June 2, 2026 |
+| **Built At** | June 20 , 2026 |
+| **Expires** | Aug 2, 2026 |
 
 > [!WARNING]  
 > **Mobile App Status:** Please note that every other feature in the mobile application is fully functional, but the **prescription scanning feature is currently not working**.
@@ -98,6 +98,7 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 | 🏢 **Care Anchor Portal** | Secure portal for caregivers to monitor adherence, schedule appointments & log vitals |
 | 👤 **Medical Profile Editor** | Manage patient identity, age & chronic health notes in the PHI cloud vault |
 | 📅 **Health Calendar** | Dynamic scheduling — caregiver-set appointments sync to patient's dashboard |
+| 🏥 **Healthcare & Emergency Integration** | Seamlessly connects with local doctors, hospitals, and emergency services for real-time support |
 | 🆘 **Intelligent SOS** | One-tap emergency with cloud alerts to linked care anchors |
 | 🌍 **Vernacular Voice** | Complete voice support for 5 Indian languages on mobile, 9 on web |
 | 💊 **Medication Tracker** | 7-day adherence visualization with pill streaks & reminders |
@@ -285,26 +286,26 @@ npm run dev
 
 ## 📋 Changelog
 
-### v1.3 — May 2, 2026 *(Current)*
+### v1.3 — June 20, 2026 *(Current)*
 - 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
 - 🔑 **Smart Key Routing** — Auto-detects `AIza...` Gemini keys vs OpenRouter keys
 - 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile
 - 🔗 **QR Anchor Linking** — New QR code modal for linking care anchor family members
 - 🏗️ **Firebase New Architecture** — `newArchEnabled: true` for React Native New Architecture
 
-### v1.2 — May 2, 2026
+### v1.2 — June 20, 2026
 - 🌍 Multi-language audio support (9 languages on web, 5 on mobile)
 - 🔊 Smart voice fallback system for missing regional voices
 - 💊 Enhanced medication tracker with adherence logging
 
-### v1.1 — May 2, 2026
+### v1.1 — June 20, 2026
 - ✅ Initial EAS cloud build (APK)
 - 🔐 Firebase Auth with Google Sign-In
 - 📸 Prescription scanner with Gemini vision
 
 ---
 
-## 👨‍💻 Team Sparks
+## 👨‍💻 Team Apex Trio
 
 | Members |
 |---------|
