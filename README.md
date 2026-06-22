@@ -72,7 +72,7 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 ### 🗣️ Pillar 2: Vernacular Voice Engine
 | Aspect | Detail |
 |--------|--------|
-| **Mobile Languages** | English, Hindi, Odia, Kannada, Telugu (5 languages — device native TTS) |
+| **Mobile Languages** | English, Hindi, Odia, Kannada, Telugu (9+ languages — device native TTS) |
 | **Web Languages** | Hindi, English, Kannada, Telugu, Odia, Tamil, Bengali, Marathi, Gujarati (**9 total**) |
 | **How It Works** | Medicine names stay in English; usage instructions are translated and spoken in the patient's native language |
 | **Smart Fallback** | If a regional voice isn't available on the device, auto-falls back to Hindi → English |
