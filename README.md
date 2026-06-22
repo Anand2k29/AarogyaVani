@@ -285,7 +285,7 @@ npm run dev
 
 ## 📋 Changelog
 
-### v1.3 — April 6, 2026 *(Current)*
+### v1.3 — April 7, 2026 *(Current)*
 - 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
 - 🔑 **Smart Key Routing** — Auto-detects `AIza...` Gemini keys vs OpenRouter keys
 - 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile
