@@ -286,22 +286,27 @@ npm run dev
 
 ## 📋 Changelog
 
-### v1.3 — June 20, 2026 *(Current)*
-- 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
-- 🔑 **Smart Key Routing** — Auto-detects `AIza...` Gemini keys vs OpenRouter keys
-- 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile
-- 🔗 **QR Anchor Linking** — New QR code modal for linking care anchor family members
-- 🏗️ **Firebase New Architecture** — `newArchEnabled: true` for React Native New Architecture
+### v1.4 — June 22, 2026 *(Current)*
+- 💬 **Global AI Chatbot Widget** — Decoupled the triage chatbot into a globally floating glassmorphic widget.
+- 🔊 **Voice Feedback Integration** — Individual TTS playback buttons added on AI messages.
+- 📍 **Care Connect Layout Reorganization** — Relocated the Leaflet interactive map to the right side, directory listings to the left, and aligned them perfectly.
 
-### v1.2 — June 20, 2026
-- 🌍 Multi-language audio support (9 languages on web, 5 on mobile)
-- 🔊 Smart voice fallback system for missing regional voices
-- 💊 Enhanced medication tracker with adherence logging
+### v1.3 — June 22, 2026
+- 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
+- 🔑 **Unified Key Management** — Shared Gemini API Key automatically between prescription scanner and global chatbot.
+- 🗣️ **Expanded Web Metrics** — Promoted web regional metrics to support 9 Indian languages.
+- 📍 **Leaflet Map Integration** — Dynamic loading of real Leaflet maps displaying real Bengaluru coordinates.
+
+### v1.2 — June 21, 2026
+- 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile.
+- 🔗 **QR Anchor Linking** — New QR code modal for linking care anchor family members.
+- 🏗️ **Firebase New Architecture** — `newArchEnabled: true` for React Native New Architecture.
+- 💊 **Enhanced Medication Tracker** — Adherence logging with pill streaks.
 
 ### v1.1 — June 20, 2026
-- ✅ Initial EAS cloud build (APK)
-- 🔐 Firebase Auth with Google Sign-In
-- 📸 Prescription scanner with Gemini vision
+- ✅ **Initial Prototype & Cloud Build** — EAS cloud build (APK).
+- 🔐 **Firebase Auth** — User sign-in with Google.
+- 📸 **Prescription Scanner** — vision scanning with Gemini.
 
 ---
 

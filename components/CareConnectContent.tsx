@@ -46,8 +46,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Open 24/7',
         phone: '+91 80223 45678',
         address: '12, Palace Road, Vasanth Nagar, Bengaluru',
-        lat: 40,
-        lng: 70
+        lat: 12.9880,
+        lng: 77.5950
     },
     {
         id: 'h2',
@@ -59,8 +59,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Open 8:00 AM - 9:00 PM',
         phone: '+91 80334 56789',
         address: '45, MG Road, Trinity Circle, Bengaluru',
-        lat: 65,
-        lng: 120
+        lat: 12.9740,
+        lng: 77.6080
     },
     {
         id: 'd1',
@@ -73,8 +73,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Available Now (Call/Consult)',
         phone: '+91 99887 76655',
         address: 'Apex Heart Care, Indira Nagar, Bengaluru',
-        lat: 110,
-        lng: 90
+        lat: 12.9780,
+        lng: 77.6400
     },
     {
         id: 'd2',
@@ -87,8 +87,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Opens at 4:00 PM',
         phone: '+91 88776 65544',
         address: 'Narayana Health, HSR Layout, Bengaluru',
-        lat: 130,
-        lng: 150
+        lat: 12.9100,
+        lng: 77.6400
     },
     {
         id: 'd3',
@@ -101,8 +101,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Available Now',
         phone: '+91 77665 54433',
         address: 'Murthy Clinic, Jayanagar 4th Block, Bengaluru',
-        lat: 90,
-        lng: 180
+        lat: 12.9290,
+        lng: 77.5910
     },
     {
         id: 'p1',
@@ -114,8 +114,8 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Open 24/7',
         phone: '+91 99000 11223',
         address: 'Shop 5, Ground Floor, Koramangala 80ft Road, Bengaluru',
-        lat: 160,
-        lng: 40
+        lat: 12.9340,
+        lng: 77.6200
     },
     {
         id: 'p2',
@@ -127,15 +127,33 @@ const LOCAL_DIRECTORY: DirectoryItem[] = [
         status: 'Open 7:00 AM - 11:00 PM',
         phone: '+91 99000 44556',
         address: 'Opp. BDA Complex, Banashankari, Bengaluru',
-        lat: 180,
-        lng: 110
+        lat: 12.9120,
+        lng: 77.5720
     }
 ];
+
+function useIsDesktop() {
+    const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width: 768px)');
+        const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
+    return isDesktop;
+}
 
 export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }) => {
     const { t, language } = useLanguage();
     const user = getCurrentUser();
-    const apiKey = localStorage.getItem('av_gemini_api_key') || '';
+    const isDesktop = useIsDesktop();
+    const sanitizeKey = (k: any) => (typeof k === 'string' && !k.includes('your_')) ? k.trim() : '';
+    const manualKey = sanitizeKey(localStorage.getItem('av_gemini_api_key') || '');
+    // @ts-ignore
+    const envGemini = sanitizeKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_GEMINI_API_KEY || '' : '');
+    // @ts-ignore
+    const envOpenRouter = sanitizeKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_OPENROUTER_API_KEY || '' : '');
+    const apiKey = envGemini || manualKey || envOpenRouter;
 
     const [activeCategory, setActiveCategory] = useState<'all' | 'hospital' | 'doctor' | 'pharmacy' | 'emergency'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -147,17 +165,109 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
     const [bookingNotes, setBookingNotes] = useState('');
     const [bookingSuccess, setBookingSuccess] = useState(false);
 
-    // AI Teleconsult State
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
-        { sender: 'ai', text: 'Namaste! I am AarogyaVani\'s AI Healthcare Support Assistant. How can I help you today? Please feel free to describe any symptoms you have, or ask for local clinic recommendations.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-    ]);
-    const [userInput, setUserInput] = useState('');
-    const [isAiLoading, setIsAiLoading] = useState(false);
-    const chatEndRef = useRef<HTMLDivElement>(null);
+    // Live Leaflet Real Map Initialization
+    const mapRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [chatMessages]);
+        let mapInstance: any = null;
+
+        const loadLeaflet = () => {
+            // Append CSS dynamically
+            if (!document.getElementById('leaflet-css')) {
+                const link = document.createElement('link');
+                link.id = 'leaflet-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            // Append JS dynamically
+            if (!(window as any).L) {
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                script.async = true;
+                script.onload = () => {
+                    initMap();
+                };
+                document.body.appendChild(script);
+            } else {
+                initMap();
+            }
+        };
+
+        const initMap = () => {
+            const L = (window as any).L;
+            if (!L || !mapRef.current) return;
+
+            // Clear previous map instance if it was initialized
+            const container = L.DomUtil.get('care-connect-map');
+            if (container && container._leaflet_id) {
+                container.innerHTML = '';
+                delete container._leaflet_id;
+            }
+
+            // Center: Richmond Town, Bengaluru
+            const userHome: [number, number] = [12.9600, 77.6100];
+
+            mapInstance = L.map('care-connect-map').setView(userHome, 13);
+
+            // Google Maps Tile Layer - looks realistic and high quality
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: 'Map data &copy; Google Maps'
+            }).addTo(mapInstance);
+
+            // Custom Marker Style
+            const createCustomIcon = (color: string, label: string) => {
+                return L.divIcon({
+                    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.35); position: relative; display: flex; align-items: center; justify-content: center;">
+                             <span style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: white; color: #1A0A10; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; border: 1.5px solid ${color}; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${label}</span>
+                           </div>`,
+                    className: 'custom-map-pin',
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+            };
+
+            // User Location Pin
+            L.marker(userHome, {
+                icon: L.divIcon({
+                    html: `<div style="background-color: #3b82f6; width: 16px; height: 16px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 12px rgba(59,130,246,0.6); position: relative;">
+                             <div style="position: absolute; inset: -5px; border: 2px solid #3b82f6; border-radius: 50%; animation: pulse-ring 1.5s infinite;"></div>
+                             <span style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: #3b82f6; color: white; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">You (Home)</span>
+                           </div>`,
+                    className: 'custom-map-pin-user',
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(mapInstance).bindPopup('<b>Your Home Location</b><br/>Richmond Town, Bengaluru');
+
+            // Add filtered directory markers to the map
+            const visibleItems = activeCategory === 'all' ? LOCAL_DIRECTORY : LOCAL_DIRECTORY.filter(item => item.type === activeCategory);
+            visibleItems.forEach(item => {
+                const markerColor = item.type === 'hospital' ? s.accent : item.type === 'doctor' ? '#f59e0b' : '#ab47bc';
+                const shortName = item.name.split(' ').slice(0, 2).join(' ');
+                L.marker([item.lat, item.lng], {
+                    icon: createCustomIcon(markerColor, shortName)
+                }).addTo(mapInstance).bindPopup(`
+                    <div style="font-family: Inter, sans-serif; padding: 2px;">
+                        <h4 style="margin: 0 0 4px 0; font-weight: 800; color: #1A0A10;">${item.name}</h4>
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #5C3A4A;">${item.specialty || item.status}</p>
+                        <a href="tel:${item.phone}" style="background: ${s.accent}; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 800; text-decoration: none; display: inline-block;">📞 Call Now</a>
+                    </div>
+                `);
+            });
+        };
+
+        loadLeaflet();
+
+        return () => {
+            if (mapInstance) {
+                mapInstance.remove();
+            }
+        };
+    }, [activeCategory, s]);
 
     // Categories Configuration
     const categories = [
@@ -212,122 +322,7 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
         }, 1500);
     };
 
-    // AI Query Integration
-    const handleSendMessage = async () => {
-        if (!userInput.trim()) return;
-        
-        const userMsg = userInput.trim();
-        const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        setChatMessages(prev => [...prev, { sender: 'user', text: userMsg, time: userTime }]);
-        setUserInput('');
-        setIsAiLoading(true);
-
-        const currentHistory = chatMessages.slice(-6); // Keep last 6 messages context
-        
-        try {
-            let aiText = '';
-            
-            // Check if user has Gemini API Key
-            if (apiKey) {
-                const resolvedLanguage = language === 'hi' ? 'Hindi' : language === 'kn' ? 'Kannada' : 'English';
-                const systemPrompt = `You are a helpful and compassionate healthcare AI assistant on AarogyaVani. Your goal is to guide the user (usually elderly or their family members) through medical questions, symptom triage, and general healthcare queries.
-Respond strictly and natively in the ${resolvedLanguage} script (e.g. Hindi in Devanagari script, Kannada in Kannada script).
-Keep responses brief, supportive, polite, and extremely clear. Use bullet points for steps.
-If the symptoms described sound severe or life-threatening (e.g. crushing chest pain, paralysis, severe shortness of breath), instruct them to call Ambulance (108) or tap the red SOS button immediately.
-Here is the chat history:
-${currentHistory.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n')}
-USER: ${userMsg}
-AI RESPONSE:`;
-
-                if (apiKey.startsWith('AIza')) {
-                    const genAI = new GoogleGenerativeAI(apiKey);
-                    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-                    const result = await model.generateContent(systemPrompt);
-                    aiText = result.response.text();
-                } else {
-                    // OpenRouter fallback
-                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: 'google/gemini-2.5-flash',
-                            messages: [{ role: 'user', content: systemPrompt }],
-                            temperature: 0.3
-                        })
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        aiText = data.choices?.[0]?.message?.content || 'Done';
-                    } else {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                }
-            } else {
-                // Pre-programmed Rule-Based Responses in English/Hindi/Kannada
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                const lowerMsg = userMsg.toLowerCase();
-                
-                const responseMap = {
-                    en: {
-                        chest: "⚠️ **WARNING:** Chest pain can indicate a cardiac emergency. Please press the red **SOS button** on the bottom nav to alert your caregiver, and dial **108** for an Ambulance immediately. Rest in a comfortable position and do not exert yourself.",
-                        fever: "🌡️ A fever is typically your body's response to an infection. Ensure you drink plenty of fluids (water, electrolyte solutions) and rest. You can consult Dr. Srinivas Murthy (General Physician, 1.5 km away) at Murthy Clinic or visit Apollo Pharmacy (0.3 km away) for OTC medicine advice.",
-                        cough: "💨 For a mild cough or cold, keep hydrated with warm fluids like herbal tea or honey water. If you experience difficulty breathing, call for medical assistance. Dr. Srinivas Murthy is available at Jayanagar 4th Block.",
-                        headache: "💆 For general headaches, resting in a quiet, dark room and staying hydrated can help. If it is accompanied by dizziness or vision changes, please consult Dr. Srinivas Murthy (General Physician).",
-                        bp: "📊 High blood pressure should be monitored regularly. Ensure you take your prescribed medication. If you feel dizzy, have a severe headache, or chest pain, consult Dr. Ramesh Verma (Cardiologist, 1.1 km away).",
-                        diabetes: "🍬 For blood sugar issues, ensure you follow your prescribed diet and take insulin/medications. If you feel shaky, sweaty, or confused, eat/drink something sugary immediately and contact your doctor.",
-                        default: "Thank you for reaching out. For medical queries, we recommend consulting our local specialists. You can view doctors like Dr. Srinivas Murthy (General Physician) or Dr. Ramesh Verma (Cardiologist) in our directory. If this is an emergency, please call **108** immediately."
-                    },
-                    hi: {
-                        chest: "⚠️ **चेतावनी:** छाती में दर्द हृदय संबंधी आपातकाल का संकेत हो सकता है। कृपया तुरंत अपने केयरगिवर को सचेत करने के लिए नीचे दिए लाल **SOS बटन** को दबाएं और तत्काल एम्बुलेंस के लिए **108** डायल करें। शांत रहें और कोई शारीरिक गतिविधि न करें।",
-                        fever: "🌡️ बुखार आमतौर पर संक्रमण के प्रति आपके शरीर की प्रतिक्रिया है। पर्याप्त तरल पदार्थ (पानी, ओआरएस) पिएं और आराम करें। आप हमारे नजदीकी डॉक्टर डॉ. श्रीनिवास मूर्ति (जनरल फिजिशियन, 1.5 किमी) से संपर्क कर सकते हैं या दवा के लिए अपोलो फार्मेसी (0.3 किमी) जा सकते हैं।",
-                        cough: "💨 सामान्य खांसी या सर्दी के लिए, गर्म पानी, हर्बल चाय या शहद लें। यदि सांस लेने में कठिनाई हो, तो तुरंत चिकित्सा सहायता लें। डॉ. श्रीनिवास मूर्ति जयनगर में उपलब्ध हैं।",
-                        headache: "💆 सामान्य सिरदर्द के लिए, शांत व अंधेरे कमरे में आराम करें। यदि सिरदर्द के साथ चक्कर आ रहे हों या धुंधला दिख रहा हो, तो कृपया डॉ. श्रीनिवास मूर्ति से सलाह लें।",
-                        bp: "📊 उच्च रक्तचाप की नियमित जांच होनी चाहिए। अपनी दवाएं समय पर लें। यदि चक्कर आएं, तेज सिरदर्द या छाती में दर्द हो, तो डॉ. रमेश वर्मा (हृदय रोग विशेषज्ञ, 1.1 किमी) से संपर्क करें।",
-                        diabetes: "🍬 शुगर की समस्या में उचित आहार लें। यदि कंपकंपी, पसीना या भ्रम महसूस हो, तो तुरंत मीठा खाएं/पिएं और अपने डॉक्टर से संपर्क करें।",
-                        default: "हमसे संपर्क करने के लिए धन्यवाद। किसी भी स्वास्थ्य समस्या के लिए, हम डॉक्टर से सलाह लेने की सलाह देते हैं। आप निर्देशिका में डॉ. रमेश वर्मा (कार्डियोलॉजिस्ट) या डॉ. श्रीनिवास मूर्ति से संपर्क कर सकते हैं। आपातकाल में तुरंत **108** कॉल करें।"
-                    },
-                    kn: {
-                        chest: "⚠️ **ಎಚ್ಚರಿಕೆ:** ಎದೆ ನೋವು ಹೃದಯದ ತುರ್ತುಸ್ಥಿತಿಯ ಸಂಕೇತವಾಗಿರಬಹುದು. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಆರೈಕೆದಾರರಿಗೆ ತಿಳಿಸಲು ಕೆಳಗಿನ ಕೆಂಪು **SOS ಬಟನ್** ಒತ್ತಿರಿ ಮತ್ತು ತಕ್ಷಣ ಆಂಬ್ಯುಲೆನ್ಸ್‌ಗೆ **108** ಗೆ ಕರೆ ಮಾಡಿ.",
-                        fever: "🌡️ ಜ್ವರವು ಸಾಮಾನ್ಯವಾಗಿ ಸೋಂಕಿಗೆ ನಿಮ್ಮ ದೇಹದ ಪ್ರತಿಕ್ರಿಯೆಯಾಗಿದೆ. ಸಾಕಷ್ಟು ನೀರು ಕುಡಿಯಿರಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ. ನೀವು ಡಾ. ಶ್ರೀನಿವಾಸ್ ಮೂರ್ತಿ (ಜನರಲ್ ಫಿಸಿಶಿಯನ್, 1.5 ಕಿ.ಮೀ) ಅವರನ್ನು ಸಂಪರ್ಕಿಸಬಹುದು.",
-                        cough: "💨 ಸೌಮ್ಯವಾದ ಕೆಮ್ಮು ಅಥವಾ ಶೀತಕ್ಕೆ ಬಿಸಿ ನೀರು ಅಥವಾ ಜೇನುತುಪ್ಪದ ನೀರನ್ನು ಕುಡಿಯಿರಿ. ಉಸಿರಾಟದ ತೊಂದರೆ ಇದ್ದರೆ ವೈದ್ಯರ ಸಹಾಯ ಪಡೆಯಿರಿ.",
-                        headache: "💆 ಸಾಮಾನ್ಯ ತಲೆನೋವಿಗೆ ಶಾಂತ ಮತ್ತು ಕತ್ತಲೆ ಕೋಣೆಯಲ್ಲಿ ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ. ತಲೆತಿರುಗುವಿಕೆ ಇದ್ದರೆ ಡಾ. ಶ್ರೀನಿವಾಸ್ ಮೂರ್ತಿ ಅವರನ್ನು ಭೇಟಿ ಮಾಡಿ.",
-                        bp: "📊 ರಕ್ತದೊತ್ತಡವನ್ನು ನಿಯಮಿತವಾಗಿ ಪರೀಕ್ಷಿಸಿ. ನಿಮ್ಮ ಔಷಧಿಗಳನ್ನು ಸಮಯಕ್ಕೆ ತೆಗೆದುಕೊಳ್ಳಿ. ತಲೆತಿರುಗುವಿಕೆ ಅಥವಾ ಎದೆನೋವು ಇದ್ದರೆ ಡಾ. ರಮೇಶ್ ವರ್ಮಾ (ಹೃದ್ರೋಗ ತಜ್ಞ, 1.1 ಕಿ.ಮೀ) ಅವರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
-                        diabetes: "🍬 ಮಧುಮೇಹ ತೊಂದರೆಗಳಿಗೆ ವೈದ್ಯರು ಸೂಚಿಸಿದ ಆಹಾರಕ್ರಮ ಪಾಲಿಸಿ. ನಡುಕ ಅಥವಾ ಗೊಂದಲವಿದ್ದರೆ ತಕ್ಷಣ ಸಿಹಿ ಪದಾರ್ಥ ಸೇವಿಸಿ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
-                        default: "ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಆರೋಗ್ಯ ಸಮಸ್ಯೆಗಳಿಗೆ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಲು ನಾವು ಶಿಫಾರಸು ಮಾಡುತ್ತೇವೆ. ಡಾ. ರಮೇಶ್ ವರ್ಮಾ ಅಥವಾ ಡಾ. ಶ್ರೀನಿವಾಸ್ ಮೂರ್ತಿ ಅವರ ವಿವರಗಳನ್ನು ಇಲ್ಲಿ ಪಡೆಯಬಹುದು. ತುರ್ತು ಸಮಯದಲ್ಲಿ ತಕ್ಷಣ **108** ಗೆ ಕರೆ ಮಾಡಿ."
-                    }
-                };
-
-                const currentMap = responseMap[language as 'en'|'hi'|'kn'] || responseMap.en;
-                if (lowerMsg.includes('chest') || lowerMsg.includes('heart') || lowerMsg.includes('दर्द') || lowerMsg.includes('ನೋವು')) {
-                    aiText = currentMap.chest;
-                } else if (lowerMsg.includes('fever') || lowerMsg.includes('cold') || lowerMsg.includes('बुखार') || lowerMsg.includes('ಜ್ವರ')) {
-                    aiText = currentMap.fever;
-                } else if (lowerMsg.includes('cough') || lowerMsg.includes('खांसी') || lowerMsg.includes('ಕೆಮ್ಮು')) {
-                    aiText = currentMap.cough;
-                } else if (lowerMsg.includes('headache') || lowerMsg.includes('head') || lowerMsg.includes('सिर') || lowerMsg.includes('ತಲೆ')) {
-                    aiText = currentMap.headache;
-                } else if (lowerMsg.includes('bp') || lowerMsg.includes('pressure') || lowerMsg.includes('ರಕ್ತದೊತ್ತಡ')) {
-                    aiText = currentMap.bp;
-                } else if (lowerMsg.includes('diabetes') || lowerMsg.includes('sugar') || lowerMsg.includes('ಮಧುಮೇಹ')) {
-                    aiText = currentMap.diabetes;
-                } else {
-                    aiText = currentMap.default;
-                }
-            }
-
-            const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            setChatMessages(prev => [...prev, { sender: 'ai', text: aiText, time: aiTime }]);
-        } catch (err) {
-            const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            setChatMessages(prev => [...prev, { sender: 'ai', text: 'Sorry, I am facing connectivity issues. Please try again or seek manual help.', time: aiTime }]);
-        } finally {
-            setIsAiLoading(false);
-        }
-    };
+    // Chatbot function removed from Care Connect to be made available globally.
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, animation: 'fadeUp 0.4s ease', paddingBottom: 60 }}>
@@ -371,100 +366,34 @@ AI RESPONSE:`;
                 ))}
             </div>
 
-            {/* Main Interactive Row: Map on Left, List/Chat on Right */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24, flexWrap: 'wrap' }}>
+            {/* Main Interactive Row: List/Hotlines on Left, Map on Right */}
+            <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? '1.1fr 1.3fr' : '1fr', gap: 28, alignItems: 'start' }}>
                 
-                {/* Left Side: Mock Map & Support */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                    
-                    {/* Mock Stylized Map Card */}
-                    {activeCategory !== 'emergency' && (
-                        <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 28, padding: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.02)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: s.txtMuted }}>📍 Interactive Local Care Map</p>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: s.accent, background: 'rgba(232,84,122,0.08)', padding: '4px 10px', borderRadius: 20 }}>0.5 km radius</span>
-                            </div>
-                            
-                            {/* Stylized Vector SVG Map */}
-                            <div style={{ width: '100%', height: 260, borderRadius: 20, background: '#F8ECEF', border: `1px solid ${s.border}`, overflow: 'hidden', position: 'relative' }}>
-                                <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%' }}>
-                                    {/* Roads Vector Drawing */}
-                                    <path d="M 0 100 Q 100 110, 200 90 M 100 0 Q 95 100, 110 200 M 0 30 Q 80 60, 200 40 M 40 0 Q 50 120, 30 200" fill="none" stroke="#FFFFFF" strokeWidth="6" strokeLinecap="round" />
-                                    <path d="M 0 100 Q 100 110, 200 90 M 100 0 Q 95 100, 110 200 M 0 30 Q 80 60, 200 40 M 40 0 Q 50 120, 30 200" fill="none" stroke="rgba(232,84,122,0.12)" strokeWidth="4" strokeLinecap="round" strokeDasharray="3 3" />
-                                    
-                                    {/* Green Areas */}
-                                    <rect x="10" y="45" width="25" height="45" rx="4" fill="rgba(34,197,94,0.08)" />
-                                    <rect x="130" y="110" width="55" height="60" rx="6" fill="rgba(34,197,94,0.08)" />
-                                    
-                                    {/* Pulse Animation Definitions */}
-                                    <defs>
-                                        <radialGradient id="userGlow" cx="50%" cy="50%" r="50%">
-                                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
-                                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                                        </radialGradient>
-                                        <radialGradient id="hospGlow" cx="50%" cy="50%" r="50%">
-                                            <stop offset="0%" stopColor="#E8547A" stopOpacity="0.4" />
-                                            <stop offset="100%" stopColor="#E8547A" stopOpacity="0" />
-                                        </radialGradient>
-                                    </defs>
-
-                                    {/* User Marker */}
-                                    <circle cx="102" cy="98" r="16" fill="url(#userGlow)" />
-                                    <circle cx="102" cy="98" r="5" fill="#3b82f6" stroke="#FFFFFF" strokeWidth="1.5" />
-                                    
-                                    {/* Directory Items Markers */}
-                                    {filteredDirectory.map((item, idx) => {
-                                        const isHosp = item.type === 'hospital';
-                                        const markerColor = isHosp ? s.accent : '#f59e0b';
-                                        return (
-                                            <g key={item.id}>
-                                                <circle cx={item.lat} cy={item.lng} r="12" fill={isHosp ? "url(#hospGlow)" : "rgba(245,158,11,0.2)"} />
-                                                <circle cx={item.lat} cy={item.lng} r="4.5" fill={markerColor} stroke="#FFFFFF" strokeWidth="1" />
-                                                <text x={item.lat} y={item.lng - 8} fontSize="6.5" fontWeight="900" fill={s.txtPri} textAnchor="middle" style={{ pointerEvents: 'none', background: '#fff' }}>
-                                                    {item.name.split(' ')[0]}
-                                                </text>
-                                            </g>
-                                        );
-                                    })}
-                                </svg>
-                                
-                                {/* Float Legend */}
-                                <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(255,255,255,0.92)', border: `1px solid ${s.border}`, borderRadius: 10, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
-                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} /> You (Home)
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
-                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.accent }} /> Hospitals / Clinics
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
-                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} /> Doctors / Chemists
-                                    </div>
+                {/* Left Column: Directory Listings or Emergency Hotlines */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, order: isDesktop ? 1 : 2 }}>
+                    {activeCategory === 'emergency' ? (
+                        emergencyHotlines.map(h => (
+                            <div key={h.id} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 20, padding: 18, display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 4px 15px rgba(0,0,0,0.01)' }}>
+                                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(229,57,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                                    {h.icon}
                                 </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Directory Listings */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        {activeCategory === 'emergency' ? (
-                            emergencyHotlines.map(h => (
-                                <div key={h.id} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 20, padding: 18, display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 4px 15px rgba(0,0,0,0.01)' }}>
-                                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(229,57,53,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                                        {h.icon}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: s.txtPri }}>{h.name}</h4>
-                                        <p style={{ margin: '2px 0 0', fontSize: 12, color: s.txtMuted }}>{h.desc}</p>
-                                    </div>
-                                    <a href={`tel:${h.number}`} style={{ background: s.red, color: '#fff', border: 'none', borderRadius: 14, padding: '10px 18px', textDecoration: 'none', fontWeight: 900, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(229,57,53,0.2)' }}>
-                                        📞 CALL {h.number}
-                                    </a>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: s.txtPri }}>{h.name}</h4>
+                                    <p style={{ margin: '2px 0 0', fontSize: 12, color: s.txtMuted }}>{h.desc}</p>
                                 </div>
-                            ))
+                                <a href={`tel:${h.number}`} style={{ background: s.red, color: '#fff', border: 'none', borderRadius: 14, padding: '10px 18px', textDecoration: 'none', fontWeight: 900, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(229,57,53,0.2)' }}>
+                                    📞 CALL {h.number}
+                                </a>
+                            </div>
+                        ))
+                    ) : (
+                        filteredDirectory.length === 0 ? (
+                            <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 24, padding: 30, textAlign: 'center', color: s.txtMuted }}>
+                                🔍 No matches found in your local area.
+                            </div>
                         ) : (
-                            filteredDirectory.map((item, idx) => (
+                            filteredDirectory.map((item) => (
                                 <div key={item.id} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 24, padding: 22, display: 'flex', gap: 16, alignItems: 'flex-start', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', transition: 'transform 0.2s', position: 'relative' }}>
-                                    
                                     {/* Left Accent Strip */}
                                     <div style={{ width: 5, background: item.type === 'hospital' ? s.accent : item.type === 'doctor' ? '#f59e0b' : '#ab47bc', borderRadius: 10, alignSelf: 'stretch', flexShrink: 0 }} />
 
@@ -511,106 +440,57 @@ AI RESPONSE:`;
                                     </div>
                                 </div>
                             ))
-                        )}
-                    </div>
+                        )
+                    )}
                 </div>
 
-                {/* Right Side: AI Medical Support Triage Desk */}
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 28, display: 'flex', flexDirection: 'column', height: 500, overflow: 'hidden', boxShadow: '0 10px 45px rgba(232,84,122,0.04)' }}>
+                {/* Right Column: Google Maps styled Interactive Map */}
+                <div style={{ 
+                    position: isDesktop ? 'sticky' : 'relative', 
+                    top: isDesktop ? 24 : 'auto', 
+                    order: isDesktop ? 2 : 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16
+                }}>
+                    <div style={{ 
+                        background: s.card, 
+                        border: `1px solid ${s.border}`, 
+                        borderRadius: 28, 
+                        padding: 20, 
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.02)',
+                        height: isDesktop ? 510 : 'auto',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <p style={{ margin: 0, fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: s.txtMuted }}>📍 Interactive Local Care Map</p>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: s.accent, background: 'rgba(232,84,122,0.08)', padding: '4px 10px', borderRadius: 20 }}>0.5 km radius</span>
+                        </div>
                         
-                        {/* Chat Header */}
-                        <div style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${s.accent}, #D43369)`, color: '#fff', display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                                🩺
-                            </div>
-                            <div>
-                                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, letterSpacing: '-0.01em' }}>AI Consultation Support</h3>
-                                <p style={{ margin: '2px 0 0', fontSize: 11, opacity: 0.85, fontWeight: 700 }}>REAL-TIME MEDICAL TRIAGE</p>
-                            </div>
-                        </div>
-
-                        {/* Messages Body */}
-                        <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, background: '#FFFDFE' }}>
-                            {chatMessages.map((msg, i) => {
-                                const isUser = msg.sender === 'user';
-                                return (
-                                    <div key={i} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', animation: 'fadeUp 0.3s ease' }}>
-                                        <div style={{
-                                            maxWidth: '85%',
-                                            padding: '12px 16px',
-                                            borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                                            background: isUser ? s.accent : 'rgba(232,84,122,0.06)',
-                                            color: isUser ? '#fff' : s.txtPri,
-                                            border: isUser ? 'none' : `1px solid ${s.border}`,
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-                                        }}>
-                                            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>{msg.text}</p>
-                                            <span style={{ display: 'block', fontSize: 10, textAlign: 'right', marginTop: 4, opacity: 0.7, color: isUser ? '#fff' : s.txtMuted }}>
-                                                {msg.time}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        {/* Real Interactive Google Maps styled Map Container */}
+                        <div style={{ width: '100%', flex: 1, minHeight: isDesktop ? 400 : 280, borderRadius: 20, border: `1px solid ${s.border}`, overflow: 'hidden', position: 'relative' }}>
+                            <div id="care-connect-map" ref={mapRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
                             
-                            {isAiLoading && (
-                                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                    <div style={{ background: 'rgba(232,84,122,0.06)', border: `1px solid ${s.border}`, padding: '12px 20px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.accent, animation: 'bounce 0.6s infinite 0s' }} />
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.accent, animation: 'bounce 0.6s infinite 0.2s' }} />
-                                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.accent, animation: 'bounce 0.6s infinite 0.4s' }} />
-                                    </div>
-                                    <style>{`
-                                        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-                                    `}</style>
+                            {/* Float Legend */}
+                            <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(255,255,255,0.92)', border: `1px solid ${s.border}`, borderRadius: 10, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 4, zIndex: 1000, pointerEvents: 'none' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} /> You (Home)
                                 </div>
-                            )}
-                            <div ref={chatEndRef} />
-                        </div>
-
-                        {/* Input Footer */}
-                        <div style={{ padding: '14px 20px', borderTop: `1px solid ${s.border}`, background: s.card, display: 'flex', gap: 10 }}>
-                            <input
-                                type="text"
-                                placeholder={apiKey ? "Ask a health question (e.g. Fever guide)..." : "Ask symptom (e.g. Chest pain, Fever)..."}
-                                value={userInput}
-                                onChange={e => setUserInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                                style={{
-                                    flex: 1,
-                                    border: `1.5px solid ${s.border}`,
-                                    borderRadius: 14,
-                                    padding: '12px 16px',
-                                    fontSize: 14,
-                                    color: s.txtPri,
-                                    background: '#FFF5F8',
-                                    outline: 'none',
-                                    fontFamily: 'Inter, system-ui, sans-serif'
-                                }}
-                            />
-                            <button
-                                onClick={handleSendMessage}
-                                style={{
-                                    background: s.accent,
-                                    border: 'none',
-                                    borderRadius: 12,
-                                    width: 44,
-                                    height: 44,
-                                    cursor: 'pointer',
-                                    color: '#fff',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: 18,
-                                    boxShadow: '0 4px 10px rgba(232,84,122,0.2)'
-                                }}
-                            >
-                                ➔
-                            </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.accent }} /> Hospitals / Clinics
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} /> Doctors / Specialists
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: s.txtPri }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ab47bc' }} /> Pharmacies
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
 
             {/* Appointment Booking Modal Dialog */}

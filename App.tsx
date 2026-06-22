@@ -16,6 +16,7 @@ import { DashboardContent } from './components/DashboardContent';
 import { ScannerContent } from './components/ScannerContent';
 import { InsightsContent } from './components/InsightsContent';
 import { CareConnectContent } from './components/CareConnectContent';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 declare global {
   interface Window {
@@ -98,6 +99,141 @@ export default function App() {
   const [healthSubTab, setHealthSubTab] = useState<HealthSubTab>('vitals');
   const [showAnchorQR, setShowAnchorQR] = useState(false);
   const { language: currentLang, setLanguage, t } = useLanguage();
+
+  // Global Chatbot States
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; time: string }>>(() => [
+    {
+      sender: 'ai',
+      text: 'Namaste! I am AarogyaVani\'s AI assistant. I can help answer medical questions, check symptoms, or give health guidance. How can I help you today?',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+  const [isChatListening, setIsChatListening] = useState(false);
+
+  const sendChatMessage = async (textToSend?: string) => {
+    const msgText = (textToSend || chatInput).trim();
+    if (!msgText) return;
+
+    const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setChatMessages(prev => [...prev, { sender: 'user', text: msgText, time: userTime }]);
+    setChatInput('');
+    setIsChatLoading(true);
+
+    const sanitizeKey = (k: any) => (typeof k === 'string' && !k.includes('your_')) ? k.trim() : '';
+    const manualKey = sanitizeKey(manualApiKey);
+    // @ts-ignore
+    const envGemini = sanitizeKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_GEMINI_API_KEY || '' : '');
+    // @ts-ignore
+    const envOpenRouter = sanitizeKey(typeof import.meta !== 'undefined' ? import.meta.env?.VITE_OPENROUTER_API_KEY || '' : '');
+    const activeApiKey = envGemini || manualKey || envOpenRouter;
+
+    const currentHistory = chatMessages.slice(-6);
+
+    try {
+      let aiText = '';
+
+      if (activeApiKey) {
+        const resolvedLanguage = currentLang === 'hi' ? 'Hindi' : currentLang === 'kn' ? 'Kannada' : 'English';
+        const systemPrompt = `You are a helpful and compassionate healthcare AI assistant on AarogyaVani. Your goal is to guide the user (usually elderly or their family members) through medical questions, symptom triage, and general healthcare queries.
+Respond strictly and natively in the ${resolvedLanguage} script (e.g. Hindi in Devanagari script, Kannada in Kannada script).
+Keep responses brief, supportive, polite, and extremely clear. Use bullet points for steps.
+If the symptoms described sound severe or life-threatening (e.g. crushing chest pain, paralysis, severe shortness of breath), instruct them to call Ambulance (108) or tap the red SOS button immediately.
+Here is the chat history:
+${currentHistory.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join('\n')}
+USER: ${msgText}
+AI RESPONSE:`;
+
+        if (activeApiKey.startsWith('AIza')) {
+          const genAI = new GoogleGenerativeAI(activeApiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const result = await model.generateContent(systemPrompt);
+          aiText = result.response.text();
+        } else {
+          // OpenRouter fallback
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${activeApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [{ role: 'user', content: systemPrompt }],
+              temperature: 0.3
+            })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            aiText = data.choices?.[0]?.message?.content || 'Done';
+          } else {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        }
+      } else {
+        // Pre-programmed Rule-Based Responses
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const lowerMsg = msgText.toLowerCase();
+        
+        const responseMap = {
+          en: {
+            chest: "⚠️ **WARNING:** Chest pain can indicate a cardiac emergency. Please press the red **SOS button** on the bottom nav or sidebar to alert your caregiver, and dial **108** for an Ambulance immediately. Rest in a comfortable position and do not exert yourself.",
+            fever: "🌡️ A fever is typically your body's response to an infection. Ensure you drink plenty of fluids (water, electrolyte solutions) and rest. You can consult our local general physician or visit a pharmacy for OTC medicine advice.",
+            cough: "💨 For a mild cough or cold, keep hydrated with warm fluids like herbal tea or honey water. If you experience difficulty breathing, call for medical assistance.",
+            headache: "💆 For general headaches, resting in a quiet, dark room and staying hydrated can help. If it is accompanied by dizziness or vision changes, please consult a General Physician.",
+            bp: "📊 High blood pressure should be monitored regularly. Ensure you take your prescribed medication. If you feel dizzy, have a severe headache, or chest pain, consult a cardiologist.",
+            diabetes: "🍬 For blood sugar issues, ensure you follow your prescribed diet and take insulin/medications. If you feel shaky, sweaty, or confused, eat/drink something sugary immediately and contact your doctor.",
+            default: "Thank you for reaching out. For medical queries, we recommend consulting our local specialists. You can view doctors and clinics in our Care Connect section. If this is an emergency, please call **108** immediately."
+          },
+          hi: {
+            chest: "⚠️ **चेतावनी:** छाती में दर्द हृदय संबंधी आपातकाल का संकेत हो सकता है। कृपया तुरंत अपने केयरगिवर को सचेत करने के लिए लाल **SOS बटन** को दबाएं और तत्काल एम्बुलेंस के लिए **108** डायल करें। शांत रहें और कोई शारीरिक गतिविधि न करें।",
+            fever: "🌡️ बुखार आमतौर पर संक्रमण के प्रति आपके शरीर की प्रतिक्रिया है। पर्याप्त तरल पदार्थ (पानी, ओआरएस) पिएं और आराम करें। आप हमारे निर्देशिका से किसी जनरल फिजिशियन से संपर्क कर सकते हैं या दवा के लिए फार्मेसी जा सकते हैं।",
+            cough: "💨 सामान्य खांसी या सर्दी के लिए, गर्म पानी, हर्बल चाय या शहद लें। यदि सांस लेने में कठिनाई हो, तो तुरंत चिकित्सा सहायता लें।",
+            headache: "💆 सामान्य सिरदर्द के लिए, शांत व अंधेरे कमरे में आराम करें। यदि सिरदर्द के साथ चक्कर आ रहे हों या धुंधला दिख रहा हो, तो कृपया डॉक्टर से सलाह लें।",
+            bp: "📊 उच्च रक्तचाप की नियमित जांच होनी चाहिए। अपनी दवाएं समय पर लें। यदि चक्कर आएं, तेज सिरदर्द या छाती में दर्द हो, तो तुरंत डॉक्टर से संपर्क करें।",
+            diabetes: "🍬 शुगर की समस्या में उचित आहार लें। यदि कंपकंपी, पसीना या भ्रम महसूस हो, तो तुरंत मीठा खाएं/पिएं और अपने डॉक्टर से संपर्क करें।",
+            default: "हमसे संपर्क करने के लिए धन्यवाद। किसी भी स्वास्थ्य समस्या के लिए, हम डॉक्टर से सलाह लेने की सलाह देते हैं। आप केयर कनेक्ट निर्देशिका में डॉक्टरों से संपर्क कर सकते हैं। आपातकाल में तुरंत **108** कॉल करें।"
+          },
+          kn: {
+            chest: "⚠️ **ಎಚ್ಚರಿಕೆ:** ಎದೆ ನೋವು ಹೃದಯದ ತುರ್ತುಸ್ಥಿತಿಯ ಸಂಕೇತವಾಗಿರಬಹುದು. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಆರೈಕೆದಾರರಿಗೆ ತಿಳಿಸಲು ಕೆಳಗಿನ ಕೆಂಪು **SOS ಬಟನ್** ಒತ್ತಿರಿ ಮತ್ತು ತಕ್ಷಣ ಆಂಬ್ಯುಲೆನ್ಸ್‌ಗೆ **108** ಗೆ ಕರೆ ಮಾಡಿ.",
+            fever: "🌡️ ಜ್ವರವು ಸಾಮಾನ್ಯವಾಗಿ ಸೋಂಕಿಗೆ ನಿಮ್ಮ ದೇಹದ ಪ್ರತಿಕ್ರಿಯೆಯಾಗಿದೆ. ಸಾಕಷ್ಟು ನೀರು ಕುಡಿಯಿರಿ ಮತ್ತು ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ. ನೀವು ಜನರಲ್ ಫಿಸಿಶಿಯನ್ ಅವರನ್ನು ಸಂಪರ್ಕಿಸಬಹುದು.",
+            cough: "💨 ಸೌಮ್ಯವಾದ ಕೆಮ್ಮು ಅಥವಾ ಶೀತಕ್ಕೆ ಬಿಸಿ ನೀರು ಅಥವಾ ಜೇನುತುಪ್ಪದ ನೀರನ್ನು ಕುಡಿಯಿರಿ. ಉಸಿರಾಟದ ತೊಂದರೆ ಇದ್ದರೆ ವೈದ್ಯರ ಸಹಾಯ ಪಡೆಯಿರಿ.",
+            headache: "💆 ಸಾಮಾನ್ಯ ತಲೆನೋವಿಗೆ ಶಾಂತ ಮತ್ತು ಕತ್ತಲೆ ಕೋಣೆಯಲ್ಲಿ ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ. ತಲೆತಿರುಗುವಿಕೆ ಇದ್ದರೆ ವೈದ್ಯರನ್ನು ಭೇಟಿ ಮಾಡಿ.",
+            bp: "📊 ರಕ್ತದೊತ್ತಡವನ್ನು ನಿಯಮಿತವಾಗಿ ಪರೀಕ್ಷಿಸಿ. ನಿಮ್ಮ ಔಷಧಿಗಳನ್ನು ಸಮಯಕ್ಕೆ ತೆಗೆದುಕೊಳ್ಳಿ. ತಲೆತಿರುಗುವಿಕೆ ಅಥವಾ ಎದೆನೋವು ಇದ್ದರೆ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+            diabetes: "🍬 ಮಧುಮೇಹ ತೊಂದರೆಗಳಿಗೆ ವೈದ್ಯರು ಸೂಚಿಸಿದ ಆಹಾರಕ್ರಮ ಪಾಲಿಸಿ. ನಡುಕ ಅಥವಾ ಗೊಂದಲವಿದ್ದರೆ ತಕ್ಷಣ ಸಿಹಿ ಪದಾರ್ಥ ಸೇವಿಸಿ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+            default: "ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಆರೋಗ್ಯ ಸಮಸ್ಯೆಗಳಿಗೆ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಲು ನಾವು ಶಿಫಾರಸು ಮಾಡುತ್ತೇವೆ. ಕೇರ್ ಕನೆಕ್ಟ್ ವಿಭಾಗದಲ್ಲಿ ವೈದ್ಯರ ವಿವರಗಳನ್ನು ಪಡೆಯಬಹುದು. ತುರ್ತು ಸಮಯದಲ್ಲಿ ತಕ್ಷಣ **108** ಗೆ ಕರೆ ಮಾಡಿ."
+          }
+        };
+
+        const currentMap = responseMap[currentLang as 'en'|'hi'|'kn'] || responseMap.en;
+        if (lowerMsg.includes('chest') || lowerMsg.includes('heart') || lowerMsg.includes('दर्द') || lowerMsg.includes('ನೋವು')) {
+          aiText = currentMap.chest;
+        } else if (lowerMsg.includes('fever') || lowerMsg.includes('cold') || lowerMsg.includes('बुखार') || lowerMsg.includes('ಜ್ವರ')) {
+          aiText = currentMap.fever;
+        } else if (lowerMsg.includes('cough') || lowerMsg.includes('खांसी') || lowerMsg.includes('ಕೆಮ್ಮು')) {
+          aiText = currentMap.cough;
+        } else if (lowerMsg.includes('headache') || lowerMsg.includes('head') || lowerMsg.includes('सिर') || lowerMsg.includes('ತಲೆ')) {
+          aiText = currentMap.headache;
+        } else if (lowerMsg.includes('bp') || lowerMsg.includes('pressure') || lowerMsg.includes('ರಕ್ತದೊತ್ತಡ')) {
+          aiText = currentMap.bp;
+        } else if (lowerMsg.includes('diabetes') || lowerMsg.includes('sugar') || lowerMsg.includes('ಮಧುಮೇಹ')) {
+          aiText = currentMap.diabetes;
+        } else {
+          aiText = currentMap.default;
+        }
+      }
+
+      const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setChatMessages(prev => [...prev, { sender: 'ai', text: aiText, time: aiTime }]);
+    } catch (err) {
+      const aiTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setChatMessages(prev => [...prev, { sender: 'ai', text: 'Sorry, I am facing connectivity issues. Please try again or seek manual help.', time: aiTime }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   const triggerConfetti = () => {
     if (window.confetti) {
@@ -480,56 +616,305 @@ export default function App() {
   };
 
   const AskAIAssistant = () => {
-    const [isListening, setIsListening] = useState(false);
-    const [aiResponse, setAiResponse] = useState<string | null>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const handleAsk = () => {
+    useEffect(() => {
+      if (isChatOpen) {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, [chatMessages, isChatOpen]);
+
+    const handleVoiceInput = () => {
       if (!('webkitSpeechRecognition' in window)) {
         alert("Speech recognition not supported in this browser.");
         return;
       }
-      setIsListening(true);
+      setIsChatListening(true);
       const recognition = new (window as any).webkitSpeechRecognition();
       recognition.lang = currentLang === 'en' ? 'en-US' : currentLang === 'kn' ? 'kn-IN' : 'hi-IN';
+      
       recognition.onresult = async (event: any) => {
         const transcript = event.results[0][0].transcript;
-        setIsListening(false);
-        // Pass to Gemini
-        const meds = localStorage.getItem('av_medications') || '[]';
-        const prompt = `User asked: "${transcript}". Current medications strictly for reference: ${meds}. Answer very briefly.`;
-        try {
-          // Trigger a dummy thinking state
-          setAiResponse("...");
-          const res = await decodePrescriptionText(transcript, manualApiKey, false, currentLang); // Text mode
-          setAiResponse(res.rawSummary || "Done");
-          const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
-          TTSEngine.speakInstruction(res.ttsScript, (langMapping[currentLang] || 'hinglish') as any);
-          setTimeout(() => setAiResponse(null), 8000);
-        } catch {
-          setAiResponse("Sorry, I couldn't understand that.");
-        }
+        setIsChatListening(false);
+        setChatInput(transcript);
+        await sendChatMessage(transcript);
       };
-      recognition.onerror = () => setIsListening(false);
+
+      recognition.onerror = () => setIsChatListening(false);
+      recognition.onend = () => setIsChatListening(false);
       recognition.start();
+    };
+
+    const handlePlayTTS = (text: string) => {
+      const langMapping: Record<string, string> = { hi: 'hindi', kn: 'kannada', en: 'hinglish' };
+      const currentVoice = langMapping[currentLang] || 'hinglish';
+      TTSEngine.speakInstruction(text, currentVoice as any);
     };
 
     if (isAnchor) return null;
 
+    const widgetBottom = isDesktop ? 30 : 88;
+    const widgetRight = isDesktop ? 30 : 16;
+    const widgetWidth = isDesktop ? 385 : 'calc(100vw - 32px)';
+    const widgetHeight = isDesktop ? 500 : 'calc(100vh - 180px)';
+
     return (
-      <div style={{ position: 'fixed', bottom: 110, left: 24, zIndex: 100 }}>
-        {aiResponse && (
-          <div className="fade-up" style={{ background: s.accent, color: '#fff', padding: '12px 18px', borderRadius: 20, marginBottom: 12, fontSize: 14, fontWeight: 700, maxWidth: 240, boxShadow: '0 8px 30px rgba(232,84,122,0.35)' }}>
-            {aiResponse}
+      <div style={{ position: 'fixed', bottom: widgetBottom, right: widgetRight, zIndex: 999, fontFamily: 'Inter, system-ui, sans-serif' }}>
+        {/* Chat Widget Panel */}
+        {isChatOpen && (
+          <div className="fade-up" style={{
+            position: 'absolute',
+            bottom: 76,
+            right: 0,
+            width: widgetWidth,
+            height: widgetHeight,
+            maxHeight: 520,
+            background: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1.5px solid ${s.border}`,
+            borderRadius: 28,
+            boxShadow: '0 20px 60px rgba(232, 84, 122, 0.16)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'chatAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <style>{`
+              @keyframes chatAppear {
+                from { opacity: 0; transform: translateY(20px) scale(0.95); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+              }
+            `}</style>
+            
+            {/* Header */}
+            <div style={{
+              padding: '16px 20px',
+              background: `linear-gradient(135deg, ${s.accent}, #D43369)`,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 22 }}>🩺</span>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 15, fontWeight: 900 }}>AarogyaVani Assistant</h4>
+                  <p style={{ margin: 0, fontSize: 10, opacity: 0.85, fontWeight: 700 }}>AI MEDICAL CONSULTATION</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsChatOpen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 28,
+                  height: 28,
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 900
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat History Panel */}
+            <div style={{
+              flex: 1,
+              padding: '16px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              background: '#FFFDFE'
+            }}>
+              {chatMessages.map((msg, idx) => {
+                const isUser = msg.sender === 'user';
+                return (
+                  <div key={idx} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', alignItems: 'flex-end', gap: 6 }}>
+                    {!isUser && (
+                      <button 
+                        onClick={() => handlePlayTTS(msg.text)}
+                        style={{
+                          background: s.subtle,
+                          border: `1px solid ${s.border}`,
+                          borderRadius: '50%',
+                          width: 26,
+                          height: 26,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: 11,
+                          color: s.accent,
+                          transition: 'all 0.2s',
+                          flexShrink: 0
+                        }}
+                        title="Listen to Message"
+                      >
+                        🔊
+                      </button>
+                    )}
+                    <div style={{
+                      maxWidth: '75%',
+                      padding: '10px 14px',
+                      borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                      background: isUser ? s.accent : 'rgba(232,84,122,0.06)',
+                      color: isUser ? '#fff' : s.txtPri,
+                      border: isUser ? 'none' : `1px solid ${s.border}`,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
+                    }}>
+                      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45, fontWeight: isUser ? 600 : 500, whiteSpace: 'pre-line' }}>{msg.text}</p>
+                      <span style={{ display: 'block', fontSize: 9, textAlign: 'right', marginTop: 3, opacity: 0.6, color: isUser ? '#fff' : s.txtMuted }}>
+                        {msg.time}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isChatLoading && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 32 }}>
+                  <div style={{ background: 'rgba(232,84,122,0.05)', border: `1px solid ${s.border}`, padding: '10px 16px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0s' }} />
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.2s' }} />
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.accent, animation: 'bounceChat 0.6s infinite 0.4s' }} />
+                  </div>
+                  <style>{`
+                    @keyframes bounceChat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+                  `}</style>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input Bar */}
+            <div style={{
+              padding: '12px 16px',
+              borderTop: `1px solid ${s.border}`,
+              background: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                background: '#FFF5F8',
+                border: `1.5px solid ${s.border}`,
+                borderRadius: 18,
+                padding: '4px 10px'
+              }}>
+                <input
+                  type="text"
+                  placeholder="Ask symptoms or health advice..."
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    padding: '8px 4px',
+                    fontSize: 13.5,
+                    color: s.txtPri,
+                    outline: 'none',
+                    fontFamily: 'Inter, system-ui, sans-serif'
+                  }}
+                />
+                
+                {/* Voice Dictation Button */}
+                <button
+                  onClick={handleVoiceInput}
+                  style={{
+                    background: isChatListening ? s.red : 'transparent',
+                    border: 'none',
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isChatListening ? '#fff' : s.accent,
+                    transition: 'all 0.2s',
+                    position: 'relative'
+                  }}
+                  title="Speak Message"
+                >
+                  <div style={{ width: 14, height: 14 }}>
+                    <MicIcon />
+                  </div>
+                  {isChatListening && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: -4,
+                      border: `1.5px solid ${s.red}`,
+                      borderRadius: '50%',
+                      animation: 'pulseChatRing 1.2s infinite'
+                    }} />
+                  )}
+                  <style>{`
+                    @keyframes pulseChatRing {
+                      0% { transform: scale(1); opacity: 1; }
+                      100% { transform: scale(1.4); opacity: 0; }
+                    }
+                  `}</style>
+                </button>
+              </div>
+              
+              {/* Send Button */}
+              <button
+                onClick={() => sendChatMessage()}
+                style={{
+                  background: s.accent,
+                  border: 'none',
+                  borderRadius: 16,
+                  width: 36,
+                  height: 36,
+                  cursor: 'pointer',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14,
+                  fontWeight: 900,
+                  boxShadow: '0 4px 10px rgba(232,84,122,0.2)'
+                }}
+              >
+                ➔
+              </button>
+            </div>
           </div>
         )}
+
+        {/* Floating Bubble Button */}
         <button
-          onClick={handleAsk}
-          style={{ width: 64, height: 64, borderRadius: '50%', background: isListening ? s.red : s.accent, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 30px rgba(232,84,122,0.38)', transition: 'all 0.3s', cursor: 'pointer', transform: isListening ? 'scale(1.15)' : 'scale(1)' }}
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            background: `linear-gradient(135deg, ${s.accent}, #D43369)`,
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 30px rgba(232,84,122,0.38)',
+            cursor: 'pointer',
+            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            transform: isChatOpen ? 'scale(0.9) rotate(90deg)' : 'scale(1) rotate(0deg)'
+          }}
+          title="AarogyaVani AI Chatbot"
         >
-          <div style={{ width: 30, height: 30, color: '#fff' }}>
-            <MicIcon />
-          </div>
-          {isListening && <div style={{ position: 'absolute', inset: -8, border: `2px solid ${s.accent}`, borderRadius: '50%', animation: 'pulse 1.5s infinite' }} />}
+          <span style={{ fontSize: 26, color: '#fff' }}>💬</span>
         </button>
       </div>
     );
