@@ -13,14 +13,14 @@
   <img src="https://img.shields.io/badge/Fallback-OpenRouter_AI-7c3aed" alt="AI Fallback" />
   <img src="https://img.shields.io/badge/Languages-9_Indian-orange" alt="Languages" />
   <img src="https://img.shields.io/badge/Version-1.3.1-E91E63" alt="Version" />
-  <img src="https://img.shields.io/badge/Build-May_2_2026-brightgreen" alt="Build Date" />
+  <img src="https://img.shields.io/badge/Build-June_22_2026-brightgreen" alt="Build Date" />
 </p>
 
 ---
 
 ## 📥 Download APK
 
-> **Latest Stable Build (June 20, 2026):**
+> **Latest Stable Build (June 22, 2026):**
 > 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/5rzSeECxEKS9H7WgHTDnGe.apk)**
 
 > [!NOTE]
@@ -33,7 +33,7 @@
 | **Profile** | `preview` (APK) |
 | **SDK Version** | Expo SDK 54 |
 | **Status** | ✅ FINISHED |
-| **Built At** | June 20 , 2026 |
+| **Built At** | June 22, 2026 |
 | **Expires** | Aug 2, 2026 |
 
 > [!WARNING]  
@@ -94,6 +94,7 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 | Feature | Description |
 |---------|-------------|
 | 📸 **AI Bilingual Scanner** | Instant extraction & vernacular translation of prescriptions using Vision AI |
+| 💬 **Global AI Chatbot** | Globally accessible conversational assistant for symptom checks and medical guidance |
 | ☁️ **Cloud Sync (Real-time)** | Patient data syncs instantly across family devices via Firebase Firestore |
 | 🏢 **Care Anchor Portal** | Secure portal for caregivers to monitor adherence, schedule appointments & log vitals |
 | 👤 **Medical Profile Editor** | Manage patient identity, age & chronic health notes in the PHI cloud vault |

@@ -124,6 +124,7 @@ const HealthcareIllustration = () => (
 // ── Data ──────────────────────────────────────────────────────────────────────
 const FEATURES = [
     { icon: '📄', title: 'AI Prescription Scanner', desc: "Reads doctor's handwriting & explains medicines in plain language" },
+    { icon: '💬', title: 'AI Consultation Chatbot', desc: 'Get instant health advice and symptom check. Try it on our website via the floating chat icon!' },
     { icon: '🔔', title: 'Smart Reminders', desc: 'Never miss a dose — alerts in Hindi, Kannada or English' },
     { icon: '🛡️', title: 'Care Anchor', desc: 'Family monitors remotely & gets instant SOS alerts' },
     { icon: '🚑', title: 'Healthcare & Emergency Integration', desc: 'Seamlessly connects with local doctors, hospitals, and emergency services for real-time support' },
@@ -405,10 +406,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuth }) => {
                                 Family.
                             </h1>
 
-                            <p style={{ fontSize: 16, color: P.textSec, lineHeight: 1.6, marginBottom: 32, maxWidth: 480, fontWeight: 500 }}>
+                            <p style={{ fontSize: 16, color: P.textSec, lineHeight: 1.6, marginBottom: 12, maxWidth: 480, fontWeight: 500 }}>
                                 AI-powered medicine assistant that reads prescriptions, sets reminders,
                                 and keeps your family connected — in{' '}
                                 <strong style={{ color: P.charcoal }}>Hindi, Kannada, or English.</strong>
+                            </p>
+
+                            <p style={{ fontSize: 13.5, color: P.pink, lineHeight: 1.5, marginBottom: 28, maxWidth: 480, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                💬 <span><strong>AI Chatbot:</strong> Available directly on our website! Chat with our AI assistant using the floating bubble in the bottom-right.</span>
                             </p>
 
                             {/* Pill tags */}

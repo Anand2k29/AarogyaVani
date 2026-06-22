@@ -391,230 +391,6 @@ AI RESPONSE:`;
     reset();
   };
 
-  // ── Auth gate ────────────────────────────────────────
-  if (!user) {
-    return <AuthPage isDark={isDark} onAuth={(u) => setUser(u)} />;
-  }
-
-
-  // ── Nav Tabs config ──────────────────────────────────
-  const CalendarIcon = () => <Icon d={['M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z', 'M16 2v4', 'M8 2v4', 'M3 10h18']} />;
-  const ClockIcon = () => <Icon d={['M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z', 'M12 6v6l4 2']} />;
-
-  const PATIENT_TABS: { id: MainTab; label: string; IconComp: React.FC }[] = [
-    { id: 'dashboard', label: 'Dashboard', IconComp: () => <div style={{ width: 22, height: 22 }}><HomeIcon /></div> },
-    { id: 'scanner', label: t('scanner'), IconComp: () => <div style={{ width: 22, height: 22 }}><ScanIcon /></div> },
-    { id: 'reminders', label: 'Reminders', IconComp: () => <div style={{ width: 22, height: 22 }}><ClockIcon /></div> },
-    { id: 'calendar', label: 'Calendar', IconComp: () => <div style={{ width: 22, height: 22 }}><CalendarIcon /></div> },
-    { id: 'health', label: 'My Health', IconComp: () => <div style={{ width: 22, height: 22 }}><Icon d={['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']} /></div> },
-    { id: 'care_connect', label: t('care_connect') || 'Care Connect', IconComp: () => <div style={{ width: 22, height: 22 }}><CareConnectIcon /></div> },
-    { id: 'sos', label: t('sos'), IconComp: () => <div style={{ width: 22, height: 22 }}><AlertIcon /></div> },
-  ];
-  const ANCHOR_TABS: { id: MainTab; label: string; IconComp: React.FC }[] = [
-    { id: 'insights', label: 'Dashboard', IconComp: () => <div style={{ width: 22, height: 22 }}><HomeIcon /></div> },
-    { id: 'reminders', label: 'Reminders', IconComp: () => <div style={{ width: 22, height: 22 }}><ClockIcon /></div> },
-    { id: 'calendar', label: 'Calendar', IconComp: () => <div style={{ width: 22, height: 22 }}><CalendarIcon /></div> },
-    { id: 'ai_reports', label: t('ai_reports') || 'AI Reports', IconComp: () => <div style={{ width: 22, height: 22 }}><SunIcon /></div> },
-  ];
-  const TABS = isAnchor ? ANCHOR_TABS : PATIENT_TABS;
-
-  /** Map dosage frequency text → scheduled times */
-  function guessTimes(dosage: string): string[] {
-    const d = dosage.toLowerCase();
-    if (d.includes('three') || d.includes('3 time') || d.includes('tid')) return ['08:00', '14:00', '20:00'];
-    if (d.includes('twice') || d.includes('2 time') || d.includes('bid') || d.includes('morning') && d.includes('night')) return ['08:00', '20:00'];
-    if (d.includes('morning')) return ['08:00'];
-    if (d.includes('afternoon')) return ['14:00'];
-    if (d.includes('night') || d.includes('bedtime')) return ['20:00'];
-    if (d.includes('once') || d.includes('od') || d.includes('daily')) return ['08:00'];
-    return ['08:00'];
-  }
-
-  function confirmAddMedicine(name: string, dosageFull: string) {
-    setAddConfirm({ name, dosage: dosageFull, times: guessTimes(dosageFull) });
-  }
-
-  function saveMedicineToLS(name: string, dosage: string, times: string[]) {
-    const medsKey = `${getDataNamespace()}_medications`;
-    const meds = JSON.parse(localStorage.getItem(medsKey) || '[]');
-    const med = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), name, dosage, times };
-    localStorage.setItem(medsKey, JSON.stringify([...meds, med]));
-
-    setAddConfirm(null);
-  }
-
-  const PatientHealthTab = () => {
-    const subTabs: { id: HealthSubTab; label: string; icon: string; color: string }[] = [
-      { id: 'vitals', label: 'Vitals Tracker', icon: '💓', color: '#26c6da' },
-      { id: 'wellness', label: 'Yoga & Wellness', icon: '🧘', color: '#3b82f6' },
-      { id: 'vault', label: 'PHI Vault', icon: '🔐', color: '#ab47bc' },
-    ];
-    return (
-      <div style={{ padding: '8px 0' }}>
-        {/* Sub-tab switcher */}
-        <div style={{ display: 'flex', gap: 8, padding: '0 4px 20px', borderBottom: `1px solid ${s.border}`, marginBottom: 20 }}>
-          {subTabs.map(tab => (
-            <button key={tab.id} onClick={() => setHealthSubTab(tab.id)}
-              style={{
-                flex: 1, padding: '12px 8px', borderRadius: 14,
-                outline: healthSubTab === tab.id ? `1.5px solid ${tab.color}40` : '1.5px solid transparent',
-                cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif',
-                fontWeight: 700, fontSize: 13, transition: 'all 0.18s',
-                background: healthSubTab === tab.id ? `${tab.color}18` : s.subtle,
-                border: 'none',
-                color: healthSubTab === tab.id ? tab.color : s.txtMuted,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              }}>
-              <span style={{ fontSize: 20 }}>{tab.icon}</span>
-              <span style={{ fontSize: 11, letterSpacing: '-0.01em' }}>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-        {/* Sub-tab content */}
-        {healthSubTab === 'vitals' && <VitalsContent s={s} />}
-        {healthSubTab === 'wellness' && <WellnessContent s={s} />}
-        {healthSubTab === 'vault' && <PHIVaultContent s={s} />}
-      </div>
-    );
-  };
-
-  const mainContent = () => {
-    if (mainTab === 'dashboard') return <DashboardContent user={user!} s={s} navigateTo={navigateTo} setHealthSubTab={setHealthSubTab} showAnchorQR={showAnchorQR} setShowAnchorQR={setShowAnchorQR} isAnchor={isAnchor} />;
-    if (mainTab === 'scanner') return <ScannerContent appState={appState} previewUrl={previewUrl} s={s} t={t} scanLang={scanLang} setScanLang={setScanLang} isLangOpen={isLangOpen} setIsLangOpen={setIsLangOpen} fileInputRef={fileInputRef} handleFileSelect={handleFileSelect} result={result} isPlaying={isPlaying} toggleAudio={toggleAudio} reset={reset} confirmAddMedicine={confirmAddMedicine} errorMsg={errorMsg} isDesktop={isDesktop} isDark={isDark} isAnchor={isAnchor} />;
-    if (mainTab === 'companion') return <ElderlyCompanion onTakeSuccess={triggerConfetti} />;
-    if (mainTab === 'reminders') return <MedicationReminders onTakeSuccess={triggerConfetti} />;
-    if (mainTab === 'calendar') return <AppointmentCalendar />;
-    if (mainTab === 'sos') return <SOSContent s={s} isAnchor={isAnchor} />;
-    if (mainTab === 'insights') return <InsightsContent s={s} user={user!} />;
-    if (mainTab === 'ai_reports') return <AIReports user={user!} s={s} />;
-    if (mainTab === 'health') return <PatientHealthTab />;
-    if (mainTab === 'care_connect') return <CareConnectContent s={s} navigateTo={navigateTo} />;
-    return null;
-  };
-
-  const SettingsModal = () => {
-    const [localKey, setLocalKey] = useState(manualApiKey);
-    const [saved, setSaved] = useState(false);
-    const saveKey = () => {
-      localStorage.setItem('av_gemini_api_key', localKey);
-      setManualApiKey(localKey);
-      setSaved(true);
-      setTimeout(() => { setSaved(false); setShowSettings(false); }, 1000);
-    };
-    const LANG_OPTIONS = [
-      { code: 'en' as const, label: 'English', flag: '🇬🇧' },
-      { code: 'kn' as const, label: 'Kannada', flag: '🇮🇳' },
-      { code: 'hi' as const, label: 'हिंदी', flag: '🇮🇳' },
-    ];
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,10,16,0.45)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowSettings(false)}>
-        <div style={{ background: '#FFFFFF', border: `1px solid rgba(232,84,122,0.2)`, borderRadius: 24, padding: 32, width: '100%', maxWidth: 460, animation: 'fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 24px 64px rgba(232,84,122,0.12)' }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: s.txtPri }}>{t('set_title')}</h2>
-            <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: s.txtMuted, fontSize: 24, cursor: 'pointer' }}>✕</button>
-          </div>
-
-          {/* Language Selector */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>🌍 {t('set_language')}</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {LANG_OPTIONS.map(l => (
-                <button
-                  key={l.code}
-                  onClick={() => setLanguage(l.code)}
-                  style={{ flex: 1, padding: '12px 8px', borderRadius: 14, border: currentLang === l.code ? `2px solid ${s.accent}` : `1px solid ${s.border}`, background: currentLang === l.code ? 'rgba(232,84,122,0.08)' : s.subtle, cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 700, fontSize: 13, color: currentLang === l.code ? s.accent : s.txtMuted, transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-                >
-                  <span style={{ fontSize: 22 }}>{l.flag}</span>
-                  <span>{l.label}</span>
-                  {currentLang === l.code && <span style={{ fontSize: 10, color: s.accent }}>✓ Active</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* API Key */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{t('set_api_key')}</label>
-            <input
-              type="password"
-              placeholder={t('set_api_placeholder')}
-              value={localKey}
-              onChange={e => setLocalKey(e.target.value)}
-              style={{ width: '100%', background: '#FFF5F8', border: `1.5px solid ${s.border}`, borderRadius: 14, padding: '16px', color: s.txtPri, fontSize: 16, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' as const }}
-            />
-            <p style={{ margin: '12px 0 0', fontSize: 13, color: s.txtMuted, lineHeight: 1.5 }}>
-              Enter your API key to enable prescription scanning. Key is saved locally on your device.
-            </p>
-          </div>
-          
-          {/* Notifications & Alerts */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>🔔 Notifications & Alerts</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: s.subtle, borderRadius: 14, cursor: 'pointer' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: s.txtPri }}>Push Notifications</span>
-                <input type="checkbox" defaultChecked style={{ width: 18, height: 18, accentColor: s.accent }} />
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: s.subtle, borderRadius: 14, cursor: 'pointer' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: s.txtPri }}>Voice Reminders</span>
-                <input type="checkbox" defaultChecked style={{ width: 18, height: 18, accentColor: s.accent }} />
-              </label>
-            </div>
-          </div>
-
-          {/* Data Privacy & Security */}
-          <div style={{ marginBottom: 24, padding: '16px', background: 'rgba(139,92,246,0.05)', borderRadius: 16, border: '1px solid rgba(139,92,246,0.2)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#8b5cf6', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
-              <span style={{ fontSize: 16 }}>🛡️</span> Data Privacy & Vault
-            </label>
-            <p style={{ margin: '0 0 12px', fontSize: 13, color: s.txtSec, lineHeight: 1.5 }}>
-              All your health records and vitals are encrypted and stored <strong>locally</strong> on this device. We do not store your data on our servers.
-            </p>
-            <button 
-              onClick={() => {
-                if(window.confirm('Are you sure you want to permanently delete all your local health data and logout?')) {
-                  localStorage.clear();
-                  window.location.reload();
-                }
-              }} 
-              style={{ width: '100%', padding: '12px', background: 'rgba(229,57,53,0.1)', color: '#e53935', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,0.15)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(229,57,53,0.1)'}
-            >
-              Clear All Local Data
-            </button>
-          </div>
-
-          <button onClick={saveKey} style={{ width: '100%', background: saved ? '#D43369' : s.accent, color: '#fff', border: 'none', borderRadius: 50, padding: '16px', fontWeight: 900, fontSize: 16, cursor: 'pointer', transition: 'background 0.3s', boxShadow: '0 6px 20px rgba(232,84,122,0.30)' }}>
-            {saved ? t('set_api_saved') : 'Save Settings'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const GlobalSOSOverlay = () => {
-    if (!globalSOS) return null;
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(229,57,53,0.95)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'sosBgPulse 2s infinite' }}>
-        <style>{`
-          @keyframes sosBgPulse { 0%,100%{background:rgba(229,57,53,0.95)} 50%{background:rgba(198,40,40,0.98)} }
-        `}</style>
-        <span style={{ fontSize: 80, marginBottom: 20, animation: 'pulse 1s infinite' }}>🚨</span>
-        <h1 style={{ margin: '0 0 10px', fontSize: 36, fontWeight: 900, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em' }}>SOS EMERGENCY</h1>
-        <p style={{ margin: '0 0 40px', fontSize: 18, color: 'rgba(255,255,255,0.9)', textAlign: 'center', maxWidth: 400, lineHeight: 1.5 }}>
-          <strong style={{ color: '#fff', fontWeight: 900 }}>{globalSOS.from}</strong> pressed their emergency button at {new Date(globalSOS.at).toLocaleTimeString()}.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 300 }}>
-          <button onClick={dismissGlobalSOS}
-            style={{ background: '#fff', color: '#c62828', border: 'none', borderRadius: 50, padding: '18px', fontSize: 18, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-            ✓ Mark as Safe
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   const AskAIAssistant = () => {
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -920,6 +696,237 @@ AI RESPONSE:`;
     );
   };
 
+  // ── Auth gate ────────────────────────────────────────
+  if (!user) {
+    return (
+      <>
+        <AuthPage isDark={isDark} onAuth={(u) => setUser(u)} />
+        <AskAIAssistant />
+      </>
+    );
+  }
+
+
+  // ── Nav Tabs config ──────────────────────────────────
+  const CalendarIcon = () => <Icon d={['M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z', 'M16 2v4', 'M8 2v4', 'M3 10h18']} />;
+  const ClockIcon = () => <Icon d={['M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z', 'M12 6v6l4 2']} />;
+
+  const PATIENT_TABS: { id: MainTab; label: string; IconComp: React.FC }[] = [
+    { id: 'dashboard', label: 'Dashboard', IconComp: () => <div style={{ width: 22, height: 22 }}><HomeIcon /></div> },
+    { id: 'scanner', label: t('scanner'), IconComp: () => <div style={{ width: 22, height: 22 }}><ScanIcon /></div> },
+    { id: 'reminders', label: 'Reminders', IconComp: () => <div style={{ width: 22, height: 22 }}><ClockIcon /></div> },
+    { id: 'calendar', label: 'Calendar', IconComp: () => <div style={{ width: 22, height: 22 }}><CalendarIcon /></div> },
+    { id: 'health', label: 'My Health', IconComp: () => <div style={{ width: 22, height: 22 }}><Icon d={['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z']} /></div> },
+    { id: 'care_connect', label: t('care_connect') || 'Care Connect', IconComp: () => <div style={{ width: 22, height: 22 }}><CareConnectIcon /></div> },
+    { id: 'sos', label: t('sos'), IconComp: () => <div style={{ width: 22, height: 22 }}><AlertIcon /></div> },
+  ];
+  const ANCHOR_TABS: { id: MainTab; label: string; IconComp: React.FC }[] = [
+    { id: 'insights', label: 'Dashboard', IconComp: () => <div style={{ width: 22, height: 22 }}><HomeIcon /></div> },
+    { id: 'reminders', label: 'Reminders', IconComp: () => <div style={{ width: 22, height: 22 }}><ClockIcon /></div> },
+    { id: 'calendar', label: 'Calendar', IconComp: () => <div style={{ width: 22, height: 22 }}><CalendarIcon /></div> },
+    { id: 'ai_reports', label: t('ai_reports') || 'AI Reports', IconComp: () => <div style={{ width: 22, height: 22 }}><SunIcon /></div> },
+  ];
+  const TABS = isAnchor ? ANCHOR_TABS : PATIENT_TABS;
+
+  /** Map dosage frequency text → scheduled times */
+  function guessTimes(dosage: string): string[] {
+    const d = dosage.toLowerCase();
+    if (d.includes('three') || d.includes('3 time') || d.includes('tid')) return ['08:00', '14:00', '20:00'];
+    if (d.includes('twice') || d.includes('2 time') || d.includes('bid') || d.includes('morning') && d.includes('night')) return ['08:00', '20:00'];
+    if (d.includes('morning')) return ['08:00'];
+    if (d.includes('afternoon')) return ['14:00'];
+    if (d.includes('night') || d.includes('bedtime')) return ['20:00'];
+    if (d.includes('once') || d.includes('od') || d.includes('daily')) return ['08:00'];
+    return ['08:00'];
+  }
+
+  function confirmAddMedicine(name: string, dosageFull: string) {
+    setAddConfirm({ name, dosage: dosageFull, times: guessTimes(dosageFull) });
+  }
+
+  function saveMedicineToLS(name: string, dosage: string, times: string[]) {
+    const medsKey = `${getDataNamespace()}_medications`;
+    const meds = JSON.parse(localStorage.getItem(medsKey) || '[]');
+    const med = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), name, dosage, times };
+    localStorage.setItem(medsKey, JSON.stringify([...meds, med]));
+
+    setAddConfirm(null);
+  }
+
+  const PatientHealthTab = () => {
+    const subTabs: { id: HealthSubTab; label: string; icon: string; color: string }[] = [
+      { id: 'vitals', label: 'Vitals Tracker', icon: '💓', color: '#26c6da' },
+      { id: 'wellness', label: 'Yoga & Wellness', icon: '🧘', color: '#3b82f6' },
+      { id: 'vault', label: 'PHI Vault', icon: '🔐', color: '#ab47bc' },
+    ];
+    return (
+      <div style={{ padding: '8px 0' }}>
+        {/* Sub-tab switcher */}
+        <div style={{ display: 'flex', gap: 8, padding: '0 4px 20px', borderBottom: `1px solid ${s.border}`, marginBottom: 20 }}>
+          {subTabs.map(tab => (
+            <button key={tab.id} onClick={() => setHealthSubTab(tab.id)}
+              style={{
+                flex: 1, padding: '12px 8px', borderRadius: 14,
+                outline: healthSubTab === tab.id ? `1.5px solid ${tab.color}40` : '1.5px solid transparent',
+                cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, Inter, system-ui, sans-serif',
+                fontWeight: 700, fontSize: 13, transition: 'all 0.18s',
+                background: healthSubTab === tab.id ? `${tab.color}18` : s.subtle,
+                border: 'none',
+                color: healthSubTab === tab.id ? tab.color : s.txtMuted,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              }}>
+              <span style={{ fontSize: 20 }}>{tab.icon}</span>
+              <span style={{ fontSize: 11, letterSpacing: '-0.01em' }}>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Sub-tab content */}
+        {healthSubTab === 'vitals' && <VitalsContent s={s} />}
+        {healthSubTab === 'wellness' && <WellnessContent s={s} />}
+        {healthSubTab === 'vault' && <PHIVaultContent s={s} />}
+      </div>
+    );
+  };
+
+  const mainContent = () => {
+    if (mainTab === 'dashboard') return <DashboardContent user={user!} s={s} navigateTo={navigateTo} setHealthSubTab={setHealthSubTab} showAnchorQR={showAnchorQR} setShowAnchorQR={setShowAnchorQR} isAnchor={isAnchor} />;
+    if (mainTab === 'scanner') return <ScannerContent appState={appState} previewUrl={previewUrl} s={s} t={t} scanLang={scanLang} setScanLang={setScanLang} isLangOpen={isLangOpen} setIsLangOpen={setIsLangOpen} fileInputRef={fileInputRef} handleFileSelect={handleFileSelect} result={result} isPlaying={isPlaying} toggleAudio={toggleAudio} reset={reset} confirmAddMedicine={confirmAddMedicine} errorMsg={errorMsg} isDesktop={isDesktop} isDark={isDark} isAnchor={isAnchor} />;
+    if (mainTab === 'companion') return <ElderlyCompanion onTakeSuccess={triggerConfetti} />;
+    if (mainTab === 'reminders') return <MedicationReminders onTakeSuccess={triggerConfetti} />;
+    if (mainTab === 'calendar') return <AppointmentCalendar />;
+    if (mainTab === 'sos') return <SOSContent s={s} isAnchor={isAnchor} />;
+    if (mainTab === 'insights') return <InsightsContent s={s} user={user!} />;
+    if (mainTab === 'ai_reports') return <AIReports user={user!} s={s} />;
+    if (mainTab === 'health') return <PatientHealthTab />;
+    if (mainTab === 'care_connect') return <CareConnectContent s={s} navigateTo={navigateTo} />;
+    return null;
+  };
+
+  const SettingsModal = () => {
+    const [localKey, setLocalKey] = useState(manualApiKey);
+    const [saved, setSaved] = useState(false);
+    const saveKey = () => {
+      localStorage.setItem('av_gemini_api_key', localKey);
+      setManualApiKey(localKey);
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setShowSettings(false); }, 1000);
+    };
+    const LANG_OPTIONS = [
+      { code: 'en' as const, label: 'English', flag: '🇬🇧' },
+      { code: 'kn' as const, label: 'Kannada', flag: '🇮🇳' },
+      { code: 'hi' as const, label: 'हिंदी', flag: '🇮🇳' },
+    ];
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,10,16,0.45)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setShowSettings(false)}>
+        <div style={{ background: '#FFFFFF', border: `1px solid rgba(232,84,122,0.2)`, borderRadius: 24, padding: 32, width: '100%', maxWidth: 460, animation: 'fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 24px 64px rgba(232,84,122,0.12)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: s.txtPri }}>{t('set_title')}</h2>
+            <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: s.txtMuted, fontSize: 24, cursor: 'pointer' }}>✕</button>
+          </div>
+
+          {/* Language Selector */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>🌍 {t('set_language')}</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {LANG_OPTIONS.map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => setLanguage(l.code)}
+                  style={{ flex: 1, padding: '12px 8px', borderRadius: 14, border: currentLang === l.code ? `2px solid ${s.accent}` : `1px solid ${s.border}`, background: currentLang === l.code ? 'rgba(232,84,122,0.08)' : s.subtle, cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 700, fontSize: 13, color: currentLang === l.code ? s.accent : s.txtMuted, transition: 'all 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+                >
+                  <span style={{ fontSize: 22 }}>{l.flag}</span>
+                  <span>{l.label}</span>
+                  {currentLang === l.code && <span style={{ fontSize: 10, color: s.accent }}>✓ Active</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* API Key */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{t('set_api_key')}</label>
+            <input
+              type="password"
+              placeholder={t('set_api_placeholder')}
+              value={localKey}
+              onChange={e => setLocalKey(e.target.value)}
+              style={{ width: '100%', background: '#FFF5F8', border: `1.5px solid ${s.border}`, borderRadius: 14, padding: '16px', color: s.txtPri, fontSize: 16, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' as const }}
+            />
+            <p style={{ margin: '12px 0 0', fontSize: 13, color: s.txtMuted, lineHeight: 1.5 }}>
+              Enter your API key to enable prescription scanning. Key is saved locally on your device.
+            </p>
+          </div>
+          
+          {/* Notifications & Alerts */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: s.accent, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>🔔 Notifications & Alerts</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: s.subtle, borderRadius: 14, cursor: 'pointer' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: s.txtPri }}>Push Notifications</span>
+                <input type="checkbox" defaultChecked style={{ width: 18, height: 18, accentColor: s.accent }} />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: s.subtle, borderRadius: 14, cursor: 'pointer' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: s.txtPri }}>Voice Reminders</span>
+                <input type="checkbox" defaultChecked style={{ width: 18, height: 18, accentColor: s.accent }} />
+              </label>
+            </div>
+          </div>
+
+          {/* Data Privacy & Security */}
+          <div style={{ marginBottom: 24, padding: '16px', background: 'rgba(139,92,246,0.05)', borderRadius: 16, border: '1px solid rgba(139,92,246,0.2)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#8b5cf6', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+              <span style={{ fontSize: 16 }}>🛡️</span> Data Privacy & Vault
+            </label>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: s.txtSec, lineHeight: 1.5 }}>
+              All your health records and vitals are encrypted and stored <strong>locally</strong> on this device. We do not store your data on our servers.
+            </p>
+            <button 
+              onClick={() => {
+                if(window.confirm('Are you sure you want to permanently delete all your local health data and logout?')) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }} 
+              style={{ width: '100%', padding: '12px', background: 'rgba(229,57,53,0.1)', color: '#e53935', border: '1px solid rgba(229,57,53,0.3)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,0.15)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(229,57,53,0.1)'}
+            >
+              Clear All Local Data
+            </button>
+          </div>
+
+          <button onClick={saveKey} style={{ width: '100%', background: saved ? '#D43369' : s.accent, color: '#fff', border: 'none', borderRadius: 50, padding: '16px', fontWeight: 900, fontSize: 16, cursor: 'pointer', transition: 'background 0.3s', boxShadow: '0 6px 20px rgba(232,84,122,0.30)' }}>
+            {saved ? t('set_api_saved') : 'Save Settings'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const GlobalSOSOverlay = () => {
+    if (!globalSOS) return null;
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(229,57,53,0.95)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'sosBgPulse 2s infinite' }}>
+        <style>{`
+          @keyframes sosBgPulse { 0%,100%{background:rgba(229,57,53,0.95)} 50%{background:rgba(198,40,40,0.98)} }
+        `}</style>
+        <span style={{ fontSize: 80, marginBottom: 20, animation: 'pulse 1s infinite' }}>🚨</span>
+        <h1 style={{ margin: '0 0 10px', fontSize: 36, fontWeight: 900, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em' }}>SOS EMERGENCY</h1>
+        <p style={{ margin: '0 0 40px', fontSize: 18, color: 'rgba(255,255,255,0.9)', textAlign: 'center', maxWidth: 400, lineHeight: 1.5 }}>
+          <strong style={{ color: '#fff', fontWeight: 900 }}>{globalSOS.from}</strong> pressed their emergency button at {new Date(globalSOS.at).toLocaleTimeString()}.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 300 }}>
+          <button onClick={dismissGlobalSOS}
+            style={{ background: '#fff', color: '#c62828', border: 'none', borderRadius: 50, padding: '18px', fontSize: 18, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
+            ✓ Mark as Safe
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // AskAIAssistant component relocated to above auth gate to prevent hoisting errors.
+
   const NavTabs = () => (
     <nav style={{ height: 72, background: 'rgba(255,255,255,0.96)', borderTop: `1px solid ${s.border}`, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', padding: '0 8px' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', width: '100%', display: 'flex', justifyContent: 'space-around' }}>
@@ -1131,7 +1138,7 @@ AI RESPONSE:`;
           </header>
 
           <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-            <div style={{ maxWidth: 900 }}>
+            <div style={{ maxWidth: mainTab === 'care_connect' ? 1400 : 900, transition: 'max-width 0.3s ease' }}>
               {mainContent()}
             </div>
           </main>
@@ -1162,6 +1169,7 @@ AI RESPONSE:`;
             </div>
           </div>
         )}
+        {!isAnchor && <AskAIAssistant />}
       </div>
     );
   }

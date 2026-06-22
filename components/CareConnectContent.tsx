@@ -167,10 +167,12 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
 
     // Live Leaflet Real Map Initialization
     const mapRef = useRef<HTMLDivElement>(null);
+    const mapInstanceRef = useRef<any>(null);
+    const markersGroupRef = useRef<any>(null);
+    const [mapLoaded, setMapLoaded] = useState(false);
 
+    // Effect 1: Load Leaflet and initialize map once
     useEffect(() => {
-        let mapInstance: any = null;
-
         const loadLeaflet = () => {
             // Append CSS dynamically
             if (!document.getElementById('leaflet-css')) {
@@ -197,38 +199,20 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
 
         const initMap = () => {
             const L = (window as any).L;
-            if (!L || !mapRef.current) return;
-
-            // Clear previous map instance if it was initialized
-            const container = L.DomUtil.get('care-connect-map');
-            if (container && container._leaflet_id) {
-                container.innerHTML = '';
-                delete container._leaflet_id;
-            }
+            if (!L || !mapRef.current || mapInstanceRef.current) return;
 
             // Center: Richmond Town, Bengaluru
             const userHome: [number, number] = [12.9600, 77.6100];
 
-            mapInstance = L.map('care-connect-map').setView(userHome, 13);
+            const map = L.map('care-connect-map').setView(userHome, 13);
+            mapInstanceRef.current = map;
 
             // Google Maps Tile Layer - looks realistic and high quality
             L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: 'Map data &copy; Google Maps'
-            }).addTo(mapInstance);
-
-            // Custom Marker Style
-            const createCustomIcon = (color: string, label: string) => {
-                return L.divIcon({
-                    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.35); position: relative; display: flex; align-items: center; justify-content: center;">
-                             <span style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: white; color: #1A0A10; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; border: 1.5px solid ${color}; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${label}</span>
-                           </div>`,
-                    className: 'custom-map-pin',
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
-                });
-            };
+            }).addTo(map);
 
             // User Location Pin
             L.marker(userHome, {
@@ -241,33 +225,70 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
                     iconSize: [16, 16],
                     iconAnchor: [8, 8]
                 })
-            }).addTo(mapInstance).bindPopup('<b>Your Home Location</b><br/>Richmond Town, Bengaluru');
+            }).addTo(map).bindPopup('<b>Your Home Location</b><br/>Richmond Town, Bengaluru');
 
-            // Add filtered directory markers to the map
-            const visibleItems = activeCategory === 'all' ? LOCAL_DIRECTORY : LOCAL_DIRECTORY.filter(item => item.type === activeCategory);
-            visibleItems.forEach(item => {
-                const markerColor = item.type === 'hospital' ? s.accent : item.type === 'doctor' ? '#f59e0b' : '#ab47bc';
-                const shortName = item.name.split(' ').slice(0, 2).join(' ');
-                L.marker([item.lat, item.lng], {
-                    icon: createCustomIcon(markerColor, shortName)
-                }).addTo(mapInstance).bindPopup(`
-                    <div style="font-family: Inter, sans-serif; padding: 2px;">
-                        <h4 style="margin: 0 0 4px 0; font-weight: 800; color: #1A0A10;">${item.name}</h4>
-                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #5C3A4A;">${item.specialty || item.status}</p>
-                        <a href="tel:${item.phone}" style="background: ${s.accent}; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 800; text-decoration: none; display: inline-block;">📞 Call Now</a>
-                    </div>
-                `);
-            });
+            // Initialize markers LayerGroup
+            markersGroupRef.current = L.layerGroup().addTo(map);
+            setMapLoaded(true);
         };
 
         loadLeaflet();
 
         return () => {
-            if (mapInstance) {
-                mapInstance.remove();
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.remove();
+                mapInstanceRef.current = null;
+                markersGroupRef.current = null;
             }
         };
-    }, [activeCategory, s]);
+    }, []);
+
+    // Effect 2: Update markers on filter or search query changes instantly
+    useEffect(() => {
+        const L = (window as any).L;
+        if (!L || !mapInstanceRef.current || !markersGroupRef.current) return;
+
+        // Clear existing markers
+        markersGroupRef.current.clearLayers();
+
+        // Custom Marker Style Builder
+        const createCustomIcon = (color: string, label: string) => {
+            return L.divIcon({
+                html: `<div style="background-color: ${color}; width: 14px; height: 14px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.35); position: relative; display: flex; align-items: center; justify-content: center;">
+                         <span style="position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: white; color: #1A0A10; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; border: 1.5px solid ${color}; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${label}</span>
+                       </div>`,
+                className: 'custom-map-pin',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+        };
+
+        // Determine items to map
+        const visibleItems = activeCategory === 'emergency' 
+            ? [] 
+            : LOCAL_DIRECTORY.filter(item => {
+                const matchesCategory = activeCategory === 'all' || item.type === activeCategory;
+                const matchesQuery = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                     (item.specialty && item.specialty.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                                     item.address.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesQuery;
+            });
+
+        // Populate markers
+        visibleItems.forEach(item => {
+            const markerColor = item.type === 'hospital' ? s.accent : item.type === 'doctor' ? '#f59e0b' : '#ab47bc';
+            const shortName = item.name.split(' ').slice(0, 2).join(' ');
+            L.marker([item.lat, item.lng], {
+                icon: createCustomIcon(markerColor, shortName)
+            }).addTo(markersGroupRef.current).bindPopup(`
+                <div style="font-family: Inter, sans-serif; padding: 2px;">
+                    <h4 style="margin: 0 0 4px 0; font-weight: 800; color: #1A0A10;">${item.name}</h4>
+                    <p style="margin: 0 0 8px 0; font-size: 11px; color: #5C3A4A;">${item.specialty || item.status}</p>
+                    <a href="tel:${item.phone}" style="background: ${s.accent}; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 800; text-decoration: none; display: inline-block;">📞 Call Now</a>
+                </div>
+            `);
+        });
+    }, [mapLoaded, activeCategory, searchQuery, s]);
 
     // Categories Configuration
     const categories = [
@@ -459,7 +480,7 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
                         borderRadius: 28, 
                         padding: 20, 
                         boxShadow: '0 8px 40px rgba(0,0,0,0.02)',
-                        height: isDesktop ? 510 : 'auto',
+                        height: isDesktop ? 650 : 'auto',
                         display: 'flex',
                         flexDirection: 'column'
                     }}>
@@ -469,7 +490,7 @@ export const CareConnectContent: React.FC<CareConnectProps> = ({ s, navigateTo }
                         </div>
                         
                         {/* Real Interactive Google Maps styled Map Container */}
-                        <div style={{ width: '100%', flex: 1, minHeight: isDesktop ? 400 : 280, borderRadius: 20, border: `1px solid ${s.border}`, overflow: 'hidden', position: 'relative' }}>
+                        <div style={{ width: '100%', height: isDesktop ? 570 : 320, borderRadius: 20, border: `1px solid ${s.border}`, overflow: 'hidden', position: 'relative' }}>
                             <div id="care-connect-map" ref={mapRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
                             
                             {/* Float Legend */}
