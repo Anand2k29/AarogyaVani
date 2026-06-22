@@ -13,18 +13,18 @@
   <img src="https://img.shields.io/badge/Fallback-OpenRouter_AI-7c3aed" alt="AI Fallback" />
   <img src="https://img.shields.io/badge/Languages-9_Indian-orange" alt="Languages" />
   <img src="https://img.shields.io/badge/Version-1.3.1-E91E63" alt="Version" />
-  <img src="https://img.shields.io/badge/Build-April_7_2026-brightgreen" alt="Build Date" />
+  <img src="https://img.shields.io/badge/Build-May_2_2026-brightgreen" alt="Build Date" />
 </p>
 
 ---
 
 ## 📥 Download APK
 
-> **Latest Stable Build (April 7, 2026):**
+> **Latest Stable Build (May 2, 2026):**
 > 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/5rzSeECxEKS9H7WgHTDnGe.apk)**
 
 > [!NOTE]
-> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **May 6, 2026**.
+> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **June 2, 2026**.
 
 | Build Detail | Value |
 |---|---|
@@ -33,8 +33,8 @@
 | **Profile** | `preview` (APK) |
 | **SDK Version** | Expo SDK 54 |
 | **Status** | ✅ FINISHED |
-| **Built At** | April 7, 2026 |
-| **Expires** | May 7, 2026 |
+| **Built At** | May 2, 2026 |
+| **Expires** | June 2, 2026 |
 
 > [!WARNING]  
 > **Mobile App Status:** Please note that every other feature in the mobile application is fully functional, but the **prescription scanning feature is currently not working**.
@@ -285,7 +285,7 @@ npm run dev
 
 ## 📋 Changelog
 
-### v1.3 — April 7, 2026 *(Current)*
+### v1.3 — May 2, 2026 *(Current)*
 - 🔀 **OpenRouter AI Integration** — Multi-model cascade fallback (Gemini 2.5 Flash → Qwen 3.6+ → Gemma 3 27B)
 - 🔑 **Smart Key Routing** — Auto-detects `AIza...` Gemini keys vs OpenRouter keys
 - 🗣️ **Improved Voice Fallback** — Async voice loading with Hindi → English fallback on mobile
