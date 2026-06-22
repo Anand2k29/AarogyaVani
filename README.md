@@ -36,6 +36,9 @@
 | **Built At** | April 7, 2026 |
 | **Expires** | May 7, 2026 |
 
+> [!WARNING]  
+> **Mobile App Status:** Please note that every other feature in the mobile application is fully functional, but the **prescription scanning feature is currently not working**.
+
 ---
 
 ## 🌟 Vision
@@ -202,7 +205,7 @@ AarogyaVani operates on a **Zero-Knowledge, On-Device Architecture**:
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/Anand2k29/AarogyaVani-GenAI.git
+git clone https://github.com/Anand2k29/AarogyaVani-Sparks.git
 ```
 
 **Install Mobile App dependencies:**
