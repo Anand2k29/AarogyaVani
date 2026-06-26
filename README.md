@@ -20,24 +20,24 @@
 
 ## 📥 Download APK
 
-> **Latest Stable Build (June 22, 2026):**
-> 👉 **[AarogyaVani v1.3.1 — Download APK](https://expo.dev/artifacts/eas/5rzSeECxEKS9H7WgHTDnGe.apk)**
+> **Latest Stable Build (June 26, 2026):**
+> 👉 **[AarogyaVani v1.4.0 — Download APK](https://expo.dev/artifacts/eas/gY7D6rA9yVtis9bUi4gzpo.apk)**
 
 > [!NOTE]
-> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **Aug 2, 2026**.
+> You must be logged into your [Expo account](https://expo.dev) to download the APK. The link expires **Aug 26, 2026**.
 
 | Build Detail | Value |
 |---|---|
-| **Build ID** | `5rzSeECxEKS9H7WgHTDnGe` |
+| **Build ID** | `814ed2a2-2ae2-4c71-a58a-177981523c18` |
 | **Platform** | Android |
 | **Profile** | `preview` (APK) |
 | **SDK Version** | Expo SDK 54 |
 | **Status** | ✅ FINISHED |
-| **Built At** | June 22, 2026 |
-| **Expires** | Aug 2, 2026 |
+| **Built At** | June 26, 2026 |
+| **Expires** | Aug 26, 2026 |
 
 > [!WARNING]  
-> **Mobile App Status:** Please note that every other feature in the mobile application is fully functional, but the **prescription scanning feature is currently not working**.
+> **Mobile App Status:** Please note that every other feature in the mobile application is fully functional, but the **prescription scanning feature is currently not working** (due to invalid API keys provided in the template, though the camera crash is fixed).
 
 ---
 

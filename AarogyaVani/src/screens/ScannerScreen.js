@@ -1,26 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { Camera, CameraView } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, typography } from '../theme/colors';
 
 export default function ScannerScreen({ navigation }) {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [cameraMode, setCameraMode] = useState(false);
   const cameraRef = useRef(null);
-  
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
 
-  const openCamera = () => {
-    if (hasPermission) {
+  const openCamera = async () => {
+    if (!permission) {
+      alert('Camera permissions are still loading.');
+      return;
+    }
+    if (permission.granted) {
       setCameraMode(true);
     } else {
-      alert('Camera permission is required to use this feature.');
+      const response = await requestPermission();
+      if (response.granted) {
+        setCameraMode(true);
+      } else {
+        alert('Camera permission is required to use this feature.');
+      }
     }
   };
 

@@ -13,7 +13,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_OPENROUTER_API_KEY": "YOUR_OPENROUTER_API_KEY",
+        "EXPO_PUBLIC_OPENROUTER_API_KEY": "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",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyBpQmd9VXNkXH2rFzdC9KYGH5_TRrBttUc",
         "EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID": "76369135608-aed8onhf8i8og9916c3s0ui89i3rsl55.apps.googleusercontent.com"
       }
     },
