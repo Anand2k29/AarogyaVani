@@ -311,15 +311,6 @@ npm run dev
 
 ---
 
-## 👨‍💻 Team Apex Trio
-
-| Members |
-|---------|
-| **Jyotasana** |
-| **Arpita Matta** |
-| **Anand Minejes** |
-
----
 
 <p align="center">
   <strong>Built with ❤️ for India's Elderly</strong><br/>
