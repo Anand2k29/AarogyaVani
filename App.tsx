@@ -149,7 +149,7 @@ AI RESPONSE:`;
 
           if (activeApiKey.startsWith('AIza')) {
             const genAI = new GoogleGenerativeAI(activeApiKey);
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
             const result = await model.generateContent(systemPrompt);
             aiText = result.response.text();
           } else {
@@ -161,7 +161,7 @@ AI RESPONSE:`;
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
+                model: 'google/gemini-1.5-flash',
                 messages: [{ role: 'user', content: systemPrompt }],
                 temperature: 0.3
               })

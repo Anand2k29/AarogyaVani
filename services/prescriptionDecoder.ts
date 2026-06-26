@@ -37,9 +37,9 @@ Do not include any markdown code block fences (like \`\`\`json). Return purely t
 `;
 
 const OPENROUTER_MODELS = [
-    { id: "google/gemini-2.5-flash", vision: true },
-    { id: "qwen/qwen3.6-plus:free", vision: true },
-    { id: "google/gemma-3-27b-it:free", vision: true },
+    { id: "google/gemini-1.5-flash", vision: true },
+    { id: "qwen/qwen-2-vl-72b-instruct", vision: true },
+    { id: "google/gemma-2-9b-it:free", vision: false },
     { id: "openrouter/free", vision: true }
 ];
 
@@ -78,9 +78,9 @@ export async function decodePrescriptionText(
     // Route 1: Direct Gemini API (If it's an official Google 'AIza' key)
     if (key.startsWith('AIza')) {
         try {
-            console.log(`[DecoderService] Directly utilizing Google Generative AI Native Framework -> [gemini-2.5-flash] for ${resolvedLanguage}`);
+            console.log(`[DecoderService] Directly utilizing Google Generative AI Native Framework -> [gemini-1.5-flash] for ${resolvedLanguage}`);
             const genAI = new GoogleGenerativeAI(key);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const parts: any[] = [{ text: PROMPT }];
             if (isImage) {
@@ -95,7 +95,7 @@ export async function decodePrescriptionText(
                 generationConfig: { responseMimeType: "application/json" }
             });
             cleanContent = result.response.text();
-            usedProvider = "Native Gemini 2.5";
+            usedProvider = "Native Gemini 1.5";
             geminiSuccess = true;
         } catch (error: any) {
             console.warn(`[DecoderService] Native Gemini failed (${error.message}). Falling back to OpenRouter...`);

@@ -20,8 +20,8 @@ Do not include any markdown code block fences (like \`\`\`json). Return purely t
 `;
 
 const OPENROUTER_MODELS = [
-    { id: "google/gemini-2.5-flash", vision: true },
-    { id: "qwen/qwen3.6-plus:free", vision: true },
+    { id: "google/gemini-1.5-flash", vision: true },
+    { id: "qwen/qwen-2-vl-72b-instruct", vision: true },
     { id: "google/gemma-3-27b-it:free", vision: true },
     { id: "openrouter/free", vision: true }
 ];
@@ -60,7 +60,7 @@ export async function analyzePrescription(input, targetLanguageCode = 'en') {
     // Route 1: Direct Gemini API (If it's an official Google 'AIza' key)
     if (key.startsWith('AIza')) {
         try {
-            console.log(`[MobileDecoder] Utilizing Native Google REST API -> [gemini-2.5-flash] for ${resolvedLanguage}`);
+            console.log(`[MobileDecoder] Utilizing Native Google REST API -> [gemini-1.5-flash] for ${resolvedLanguage}`);
             
             const payload = {
                 contents: [{
@@ -73,7 +73,7 @@ export async function analyzePrescription(input, targetLanguageCode = 'en') {
                 generationConfig: { response_mime_type: "application/json" }
             };
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

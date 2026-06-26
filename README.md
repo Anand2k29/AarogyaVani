@@ -64,8 +64,8 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Patient photographs a handwritten/printed prescription |
-| **Primary AI** | Google Generative AI (`gemini-2.5-flash`) via direct REST API |
-| **Fallback Cascade** | OpenRouter AI → `google/gemini-2.5-flash` → `qwen/qwen3.6-plus:free` → `google/gemma-3-27b-it:free` |
+| **Primary AI** | Google Generative AI (`gemini-1.5-flash`) via direct REST API |
+| **Fallback Cascade** | OpenRouter AI → `google/gemini-1.5-flash` → `qwen/qwen-2-vl-72b-instruct` → `google/gemma-2-9b-it:free` |
 | **Output** | Structured JSON: medicine names, dosages, frequencies, timings & TTS script |
 | **Key Insight** | Detects API key type automatically — `AIza...` keys use Gemini REST directly; all others route via OpenRouter |
 
@@ -153,7 +153,7 @@ India's elderly population (140M+) faces a critical healthcare crisis — **medi
 │       ▼               │    │  🔐 Firebase Auth         │
 │  🔀 OpenRouter AI     │    │  (Google Sign-In)        │
 │  (Multi-model cascade)│    │                          │
-│  • gemini-2.5-flash   │    └─────────┬────────────────┘
+│  • gemini-1.5-flash   │    └─────────┬────────────────┘
 │  • qwen3.6-plus:free  │              │
 │  • gemma-3-27b-it:free│    ┌─────────┼──────────────┐
 └───────────────────────┘    ▼                        ▼
